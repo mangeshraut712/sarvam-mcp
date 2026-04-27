@@ -1,0 +1,3 @@
+# Cloudflare Pages / Netlify redirects file.
+# /install  →  the bash installer at the repo root.
+/install      /install.sh      200
