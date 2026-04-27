@@ -1,0 +1,206 @@
+"""Sarvam HTTP client — auth-agnostic, retry, observability.
+
+One instance per server, injected into tools via FastMCP's lifespan context.
+Tools call ``client.post_json(...)``, ``client.post_multipart(...)``, or
+``client.stream_ws(...)`` and never touch headers/auth themselves.
+"""
+
+from __future__ import annotations
+
+import json
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
+from typing import Any
+
+import httpx
+
+from sarvam_mcp.auth.context import current_auth
+from sarvam_mcp.http.errors import (
+    SarvamAPIError,
+    SarvamAuthError,
+    SarvamBadRequestError,
+    SarvamRateLimitError,
+)
+from sarvam_mcp.http.retry import retry_async
+from sarvam_mcp.observability import CallMetrics, metrics_from_response_headers
+
+DEFAULT_TIMEOUT = httpx.Timeout(120.0, connect=10.0)
+
+
+class SarvamClient:
+    """Thin wrapper over httpx that injects auth + parses Sarvam errors."""
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        region: str = "in",
+        timeout: httpx.Timeout = DEFAULT_TIMEOUT,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._region = region
+        self._client = httpx.AsyncClient(
+            base_url=self._base_url,
+            timeout=timeout,
+            headers={"User-Agent": f"sarvam-mcp/0.1.0 (region={region})"},
+        )
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
+    # ---- request shapes -------------------------------------------------
+
+    async def post_json(
+        self,
+        path: str,
+        *,
+        json_body: Mapping[str, Any],
+        scope: str | None = None,
+    ) -> tuple[Any, CallMetrics]:
+        return await self._do_request(
+            "POST", path, json=dict(json_body), scope=scope
+        )
+
+    async def post_multipart(
+        self,
+        path: str,
+        *,
+        data: Mapping[str, Any] | None = None,
+        files: Mapping[str, Any] | None = None,
+        scope: str | None = None,
+    ) -> tuple[Any, CallMetrics]:
+        return await self._do_request(
+            "POST",
+            path,
+            data=dict(data) if data else None,
+            files=dict(files) if files else None,
+            scope=scope,
+        )
+
+    async def get_json(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        scope: str | None = None,
+    ) -> tuple[Any, CallMetrics]:
+        return await self._do_request(
+            "GET", path, params=dict(params) if params else None, scope=scope
+        )
+
+    @asynccontextmanager
+    async def stream_ws(
+        self,
+        url: str,
+        *,
+        scope: str | None = None,
+    ) -> AsyncIterator[Any]:
+        """Open a WebSocket against ``url`` (full URL, not a path) with auth headers.
+
+        The implementation lives here — but tools should rarely call this
+        directly; ``tools/tts.py`` is the single consumer for now.
+        """
+        # Lazy import: websockets isn't needed for non-streaming tools.
+        import websockets
+
+        provider = current_auth()
+        headers = await provider.headers(scope=scope)
+        async with websockets.connect(url, additional_headers=headers) as ws:
+            yield ws
+
+    # ---- internals ------------------------------------------------------
+
+    async def _do_request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: Mapping[str, Any] | None = None,
+        data: Mapping[str, Any] | None = None,
+        files: Mapping[str, Any] | None = None,
+        params: Mapping[str, Any] | None = None,
+        scope: str | None = None,
+    ) -> tuple[Any, CallMetrics]:
+        provider = current_auth()
+        auth_headers = await provider.headers(scope=scope)
+
+        async def send() -> httpx.Response:
+            resp = await self._client.request(
+                method,
+                path,
+                json=json,
+                data=data,
+                files=files,
+                params=params,
+                headers=auth_headers,
+            )
+            # Trigger retry for transient 5xx via raise_for_status.
+            if resp.status_code in (500, 502, 503, 504):
+                resp.raise_for_status()
+            return resp
+
+        try:
+            response = await retry_async(send)
+        except httpx.HTTPStatusError as exc:
+            # Retries exhausted — fall through to typed error mapping below.
+            response = exc.response
+        metrics = metrics_from_response_headers(dict(response.headers))
+        metrics.status_code = response.status_code
+
+        if response.is_success:
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type:
+                return response.json(), metrics
+            # Binary (audio, etc.) — caller decides how to handle.
+            return response.content, metrics
+
+        await self._raise_for_error(response, metrics)
+        # Unreachable
+        raise AssertionError("unreachable")
+
+    async def _raise_for_error(
+        self, response: httpx.Response, metrics: CallMetrics
+    ) -> None:
+        body_text = response.text
+        message = _extract_error_message(body_text) or response.reason_phrase
+        kwargs = dict(
+            status_code=response.status_code,
+            request_id=metrics.request_id,
+            body=body_text,
+        )
+        if response.status_code in (401, 403):
+            raise SarvamAuthError(message, **kwargs)
+        if response.status_code == 400:
+            raise SarvamBadRequestError(message, **kwargs)
+        if response.status_code == 429:
+            retry_after = _maybe_float(response.headers.get("retry-after"))
+            raise SarvamRateLimitError(message, retry_after=retry_after, **kwargs)
+        raise SarvamAPIError(message, **kwargs)
+
+
+def _extract_error_message(body_text: str) -> str | None:
+    if not body_text:
+        return None
+    try:
+        payload = json.loads(body_text)
+    except json.JSONDecodeError:
+        return body_text[:500]
+    if isinstance(payload, dict):
+        for key in ("error", "message", "detail"):
+            value = payload.get(key)
+            if isinstance(value, str):
+                return value
+            if isinstance(value, dict):
+                inner = value.get("message") or value.get("detail")
+                if isinstance(inner, str):
+                    return inner
+    return body_text[:500]
+
+
+def _maybe_float(raw: str | None) -> float | None:
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None

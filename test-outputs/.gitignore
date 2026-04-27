@@ -1,0 +1,7 @@
+# Live-API outputs are transient and may contain account-specific data.
+# Track only the human-readable summaries; ignore raw JSON / audio.
+*
+!.gitignore
+!README.md
+!SUMMARY.md
+!*.md

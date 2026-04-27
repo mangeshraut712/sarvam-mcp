@@ -1,0 +1,108 @@
+"""``sv_dub`` — audio in → translated audio out.
+
+The flagship "wow" demo: take an Indic-language audio file, transcribe it,
+translate the transcript to a target Indic language, and re-synthesize.
+ElevenLabs has Dubbing as a separate paid product; here it's one MCP call.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from fastmcp import Context, FastMCP
+from pydantic import Field
+
+from sarvam_mcp.observability import measure_tool
+from sarvam_mcp.tools._common import (
+    BulbulSpeaker,
+    LanguageCode,
+    TtsLanguageCode,
+    ready_ctx,
+)
+from sarvam_mcp.workflows._helpers import (
+    stt_transcribe,
+    translate_text,
+    tts_synthesize,
+)
+
+
+def register(mcp: FastMCP) -> None:
+    @mcp.tool(
+        name="sv_dub",
+        description=(
+            "Dub an Indic audio file into another Indic language. Pipeline: "
+            "Saarika STT → Mayura/Sarvam-Translate → Bulbul TTS. Returns the "
+            "original transcript, translated transcript, and a path to the "
+            "newly-dubbed WAV file."
+        ),
+    )
+    async def sv_dub(
+        ctx: Context,
+        audio_path: str = Field(description="Absolute path to the source audio file."),
+        target_language_code: TtsLanguageCode = Field(
+            description="Output language for the dubbed audio.",
+        ),
+        source_language_code: LanguageCode = Field(
+            default="unknown",
+            description="STT language hint. 'unknown' lets Saarika auto-detect.",
+        ),
+        speaker: BulbulSpeaker = Field(default="priya"),
+        translate_model: str = Field(
+            default="mayura:v1",
+            description="`mayura:v1` (11 langs, modes) or `sarvam-translate:v1` (22 langs).",
+        ),
+        translate_mode: str = Field(default="formal"),
+    ) -> dict[str, Any]:
+        sc = await ready_ctx(ctx)
+        path = Path(audio_path).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(f"Audio file not found: {path}")
+
+        with measure_tool() as metrics:
+            await ctx.info("Transcribing source audio…")
+            transcript, detected_lang = await stt_transcribe(
+                sc, path, language_code=source_language_code, metrics=metrics
+            )
+            if not transcript.strip():
+                raise RuntimeError("STT returned an empty transcript — nothing to dub.")
+
+            source_lang = detected_lang or (
+                source_language_code if source_language_code != "unknown" else "hi-IN"
+            )
+
+            await ctx.info(
+                f"Translating from {source_lang} to {target_language_code}…"
+            )
+            translated = await translate_text(
+                sc,
+                transcript,
+                source_language_code=source_lang,
+                target_language_code=target_language_code,
+                model=translate_model,
+                mode=translate_mode,
+                metrics=metrics,
+            )
+            if not translated.strip():
+                raise RuntimeError("Translate returned empty text.")
+
+            await ctx.info("Synthesizing dubbed audio…")
+            stored = await tts_synthesize(
+                sc,
+                translated,
+                target_language_code=target_language_code,
+                speaker=speaker,
+                filename_prefix="sv-dub",
+                metrics=metrics,
+            )
+
+        return {
+            "source_transcript": transcript,
+            "source_language": source_lang,
+            "translated_transcript": translated,
+            "target_language": target_language_code,
+            "audio_file_path": stored.file_path,
+            "audio_resource_uri": stored.resource_uri,
+            "audio_size_bytes": stored.size_bytes,
+            "observability": metrics.to_response_block(),
+        }

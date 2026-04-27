@@ -1,0 +1,77 @@
+"""Sarvam-M chat completions — OpenAI-compatible."""
+
+from __future__ import annotations
+
+from typing import Any, Literal
+
+from fastmcp import Context, FastMCP
+from pydantic import Field
+
+from sarvam_mcp.observability import measure_tool
+from sarvam_mcp.tools._common import ready_ctx
+
+CHAT_PATH = "/v1/chat/completions"
+
+ChatRole = Literal["system", "user", "assistant"]
+# Live-tested 2026-04-27 — exhaustive list of accepted models on this endpoint.
+SarvamLLM = Literal["sarvam-m", "sarvam-30b", "sarvam-105b"]
+
+
+def register(mcp: FastMCP) -> None:
+    @mcp.tool(
+        name="sarvam_llm_complete",
+        description=(
+            "Generate chat completions with Sarvam's Indic-tuned LLMs.\n\n"
+            "Models:\n"
+            "  • `sarvam-m` (default) — 24B, fastest, good for chat / agent loops\n"
+            "  • `sarvam-30b` — MoE, 2.4B active, balanced quality + cost\n"
+            "  • `sarvam-105b` — MoE flagship, best reasoning + tool use\n\n"
+            "All three speak 23 Indic languages with native, romanized, and "
+            "code-mixed support. OpenAI-compatible message format."
+        ),
+    )
+    async def sarvam_llm_complete(
+        ctx: Context,
+        messages: list[dict[str, Any]] = Field(
+            description=(
+                "OpenAI-style messages: [{'role': 'system'|'user'|'assistant', "
+                "'content': '...'}, ...]"
+            ),
+        ),
+        model: SarvamLLM = Field(
+            default="sarvam-m",
+            description="`sarvam-m` (default) | `sarvam-30b` | `sarvam-105b` (flagship).",
+        ),
+        temperature: float = Field(default=0.7, ge=0.0, le=2.0),
+        top_p: float = Field(default=1.0, ge=0.0, le=1.0),
+        max_tokens: int | None = Field(default=None, ge=1),
+        stream: bool = Field(
+            default=False,
+            description="Streaming via MCP isn't useful for chat — keep False unless testing.",
+        ),
+    ) -> dict[str, Any]:
+        sc = await ready_ctx(ctx)
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "top_p": top_p,
+            "stream": stream,
+        }
+        if max_tokens is not None:
+            body["max_tokens"] = max_tokens
+
+        with measure_tool() as metrics:
+            payload, call = await sc.client.post_json(CHAT_PATH, json_body=body)
+            metrics.merge(call)
+
+        choice = (payload.get("choices") or [{}])[0]
+        message = choice.get("message") or {}
+        return {
+            "content": message.get("content", ""),
+            "role": message.get("role", "assistant"),
+            "finish_reason": choice.get("finish_reason"),
+            "usage": payload.get("usage"),
+            "model": payload.get("model"),
+            "observability": metrics.to_response_block(),
+        }
