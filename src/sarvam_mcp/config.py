@@ -24,7 +24,6 @@ class Config:
     base_url: str = DEFAULT_BASE_URL
     base_path: Path = field(default_factory=lambda: Path(DEFAULT_BASE_PATH).expanduser())
     output_mode: OutputMode = DEFAULT_OUTPUT_MODE
-    flow_enabled: bool = False
 
     @classmethod
     def load(cls) -> Config:
@@ -36,7 +35,6 @@ class Config:
         base_url = os.environ.get("SARVAM_API_BASE_URL", DEFAULT_BASE_URL)
         base_path_str = os.environ.get("SARVAM_MCP_BASE_PATH", DEFAULT_BASE_PATH)
         mode_str = os.environ.get("SARVAM_AUDIO_OUTPUT_MODE", DEFAULT_OUTPUT_MODE).lower()
-        flow_enabled = os.environ.get("SARVAM_MCP_ENABLE_FLOW", "0") in ("1", "true", "yes")
 
         if mode_str not in ("files", "resources", "both"):
             raise ValueError(
@@ -52,7 +50,6 @@ class Config:
             base_url=base_url.rstrip("/"),
             base_path=base_path,
             output_mode=mode_str,  # type: ignore[arg-type]
-            flow_enabled=flow_enabled,
         )
 
 

@@ -32,7 +32,7 @@ LanguageCode = Literal[
     "as-IN",  # Assamese
     "ur-IN",  # Urdu
     "ne-IN",  # Nepali
-    "gom-IN",  # Konkani
+    "kok-IN",  # Konkani
     "ks-IN",  # Kashmiri
     "sd-IN",  # Sindhi
     "sa-IN",  # Sanskrit
@@ -96,7 +96,7 @@ def server_ctx(ctx: Context) -> ServerContext:
     """Pull the lifespan-managed ServerContext off a tool ``Context``.
 
     Sync — does NOT verify auth. Use ``await ready_ctx(ctx)`` from any tool
-    function that needs to make API calls (which is all of them in v1).
+    function that needs to make API calls.
     """
     lifespan = ctx.request_context.lifespan_context
     if not isinstance(lifespan, ServerContext):
@@ -111,8 +111,7 @@ async def ready_ctx(ctx: Context) -> ServerContext:
     if necessary). Every tool that calls the Sarvam API should ``await`` this
     on its first line.
     """
-    # Lazy import to avoid a tools→auth.elicit→… circular at module load.
-    from sarvam_mcp.auth.elicit import ensure_auth
+    from sarvam_mcp.auth.elicit import ensure_auth  # lazy to avoid circular import
 
     await ensure_auth(ctx)
     return server_ctx(ctx)

@@ -64,15 +64,3 @@ def test_base_path_expands(monkeypatch, tmp_path):
     assert cfg.base_path == Path(target)
 
 
-def test_flow_disabled_by_default(monkeypatch, tmp_path):
-    monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("SARVAM_API_KEY", "sk_x")
-    monkeypatch.delenv("SARVAM_MCP_ENABLE_FLOW", raising=False)
-    assert Config.load().flow_enabled is False
-
-
-def test_flow_enabled_via_env(monkeypatch, tmp_path):
-    monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("SARVAM_API_KEY", "sk_x")
-    monkeypatch.setenv("SARVAM_MCP_ENABLE_FLOW", "1")
-    assert Config.load().flow_enabled is True

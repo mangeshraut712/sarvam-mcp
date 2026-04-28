@@ -1,8 +1,6 @@
 """``sarvam://`` resource URI scheme.
 
-Used when ``SARVAM_AUDIO_OUTPUT_MODE`` is ``resources`` or ``both`` — the
-hosted MCP transport (v1.1) exposes URIs as MCP resources fetchable by the
-client without disk access.
+Used when ``SARVAM_AUDIO_OUTPUT_MODE`` is ``resources`` or ``both``.
 """
 
 from __future__ import annotations

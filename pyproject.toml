@@ -8,14 +8,21 @@ version = "0.1.0"
 description = "Official Sarvam AI MCP server — STT, TTS, Translate, Transliterate, LLM, Vision OCR for Indic languages"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "TBD" }
-authors = [{ name = "Sarvam AI" }]
-keywords = ["sarvam", "mcp", "model-context-protocol", "tts", "stt", "indic", "translation"]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Sarvam AI", email = "support@sarvam.ai" }]
+keywords = ["sarvam", "mcp", "model-context-protocol", "tts", "stt", "indic", "translation", "indian-languages"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "fastmcp>=0.4.0",
@@ -38,8 +45,11 @@ dev = [
 sarvam-mcp = "sarvam_mcp.server:main"
 
 [project.urls]
-Homepage = "https://sarvam.ai"
+Homepage = "https://mcp.sarvam.ai"
 Documentation = "https://docs.sarvam.ai"
+Repository = "https://github.com/sarvamai/sarvam-mcp"
+Issues = "https://github.com/sarvamai/sarvam-mcp/issues"
+Changelog = "https://github.com/sarvamai/sarvam-mcp/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sarvam_mcp"]

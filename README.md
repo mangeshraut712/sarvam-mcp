@@ -50,18 +50,23 @@ All defaults below reflect the latest non-deprecated models live as of 2026-04-2
 
 | Tool | What it does | Default model | Other accepted |
 |---|---|---|---|
-| `sarvam_stt_transcribe` | Audio file → transcript | `saarika:v2.5` | — (no v3 yet) |
-| `sarvam_stt_translate` | Audio → English text | `saaras:v3` | `saaras:v3-realtime`, `saaras:v2.5` |
-| `sarvam_stt_batch_submit` | Long-audio job init (Azure SAS) | `saarika:v2.5` | — |
+| `sarvam_stt_transcribe` | Audio file → transcript (5 modes: transcribe, translate, verbatim, translit, codemix) | `saaras:v3` | `saarika:v2.5` (legacy) |
+| `sarvam_stt_translate` | Audio → English text (DEPRECATED — use `stt_transcribe` with `mode=translate`) | `saaras:v2.5` | — |
+| `sarvam_stt_batch_submit` | Long-audio job init (Azure SAS) | `saaras:v3` | `saarika:v2.5` (legacy) |
 | `sarvam_stt_batch_status` | Long-audio job poll | — | — |
 | `sarvam_tts_speak` | Text → audio file | `bulbul:v3` (speaker `priya`) | `bulbul:v3-beta`, `bulbul:v2` |
 | `sarvam_tts_stream` | Text → streamed audio | `bulbul:v3` | `bulbul:v2` |
 | `sarvam_translate` | Cross-language text translate | `mayura:v1` | `sarvam-translate:v1` (22 langs) |
 | `sarvam_transliterate` | Script conversion | — | — |
-| `sarvam_identify_language` | Language + script detect | — | — |
+| `sarvam_identify_language` | Language + script detect (11 languages) | — | — |
 | `sarvam_text_analytics` | Typed Q&A over text | — | — |
-| `sarvam_llm_complete` | Chat completions | `sarvam-m` | `sarvam-30b`, `sarvam-105b` |
-| `sarvam_vision_extract` | Document/image OCR | Sarvam Vision (endpoint TBD) | — |
+| `sarvam_llm_complete` | Chat completions | `sarvam-30b` | `sarvam-105b`, `sarvam-m` (legacy) |
+| `sarvam_vision_extract` | Document Intelligence (job-based pipeline) | Sarvam Vision (3B VLM) | — |
+| `sarvam_vision_job_status` | Poll Document Intelligence job status | — | — |
+| `sarvam_pronunciation_list` | List pronunciation dictionaries | — | — |
+| `sarvam_pronunciation_get` | Get a pronunciation dictionary | — | — |
+| `sarvam_pronunciation_create` | Create a pronunciation dictionary | — | — |
+| `sarvam_pronunciation_delete` | Delete a pronunciation dictionary | — | — |
 
 ## Configuration
 
@@ -72,7 +77,6 @@ All defaults below reflect the latest non-deprecated models live as of 2026-04-2
 | `SARVAM_API_BASE_URL` | `https://api.sarvam.ai` | Override for testing/staging. |
 | `SARVAM_MCP_BASE_PATH` | `~/Desktop` | Where audio/document files land in `files` mode. |
 | `SARVAM_AUDIO_OUTPUT_MODE` | `files` | `files` \| `resources` \| `both`. |
-| `SARVAM_MCP_ENABLE_FLOW` | `0` | Internal flag — Flow tools (v1.1). |
 
 `~/.sarvam/credentials` format:
 
@@ -83,7 +87,7 @@ region = in
 
 ## Status
 
-v1 — atomic tools only. Composite workflows (`/sv-voice`, `/sv-localize`, `/sv-recall`, `/sv-dub`) ship in v1.x. Hosted remote MCP at `mcp.sarvam.ai` ships in v1.1. Samvaad control plane in v2.
+Atomic tools + composite workflows (`/sv-voice`, `/sv-localize`, `/sv-recall`, `/sv-dub`) + code-builder tools (docs, snippets, scaffolders).
 
 ## Development
 

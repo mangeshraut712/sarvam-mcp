@@ -22,15 +22,12 @@ logger = logging.getLogger("sarvam_mcp")
 async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
     """Build shared deps once at server start; tear down at shutdown.
 
-    Notably we do **not** fail when ``SARVAM_API_KEY`` is missing — the server
-    starts cleanly and the first tool call will elicit the key from the user
-    via MCP elicitation (see ``auth/elicit.py``). This makes the
-    install-then-run experience usable in clients that auto-spawn the server.
+    The server does **not** fail when ``SARVAM_API_KEY`` is missing — it starts
+    cleanly and the first tool call will elicit the key from the user via MCP
+    elicitation (see ``auth/elicit.py``).
     """
     config = Config.load()
     if config.api_key:
-        # v1: StaticKeyProvider populated up front. v1.1 hosted middleware will
-        # set per-request OAuth; either way, tool code stays unchanged.
         set_auth(StaticKeyProvider(config.api_key))
         auth_status = "configured"
     else:
@@ -58,7 +55,16 @@ def build_server() -> FastMCP:
     mcp = FastMCP("sarvam-mcp", lifespan=_lifespan)
 
     # Atomic tools — registered eagerly. Each module exposes ``register(mcp)``.
-    from sarvam_mcp.tools import language, llm, stt, translate, transliterate, tts, vision
+    from sarvam_mcp.tools import (
+        language,
+        llm,
+        pronunciation,
+        stt,
+        translate,
+        transliterate,
+        tts,
+        vision,
+    )
 
     stt.register(mcp)
     tts.register(mcp)
@@ -67,8 +73,9 @@ def build_server() -> FastMCP:
     language.register(mcp)
     llm.register(mcp)
     vision.register(mcp)
+    pronunciation.register(mcp)
 
-    # Composite /sv-* workflows — chain multiple atomic tools per call.
+    # Composite workflows — chain multiple atomic tools per call.
     from sarvam_mcp.workflows import dub, localize, recall, voice
 
     voice.register(mcp)
@@ -76,10 +83,9 @@ def build_server() -> FastMCP:
     localize.register(mcp)
     recall.register(mcp)
 
-    # Flow tools — registered only if SARVAM_MCP_ENABLE_FLOW=1 (v1.1 preview).
-    from sarvam_mcp import flow
+    from sarvam_mcp import code
 
-    flow.register(mcp, Config.load())
+    code.register(mcp)
 
     return mcp
 

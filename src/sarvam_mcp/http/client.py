@@ -1,4 +1,4 @@
-"""Sarvam HTTP client — auth-agnostic, retry, observability.
+"""Sarvam HTTP client — retry, observability, auth injection.
 
 One instance per server, injected into tools via FastMCP's lifespan context.
 Tools call ``client.post_json(...)``, ``client.post_multipart(...)``, or
