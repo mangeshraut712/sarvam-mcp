@@ -1,6 +1,6 @@
 # sarvam-mcp
 
-Official Sarvam AI MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (Sarvam-M), Vision OCR — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed, OpenAI Agents) can call Sarvam with zero boilerplate.
+Official Sarvam MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (Sarvam-M), Vision OCR — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed, OpenAI Agents) can call Sarvam with zero boilerplate.
 
 ## Quickstart
 
