@@ -63,7 +63,9 @@ include = [
 ]
 
 [tool.ruff]
-line-length = 100
+# 110 fits the longer disambiguation prefix added to every tool description
+# ("Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.")
+line-length = 110
 target-version = "py311"
 
 [tool.ruff.lint]

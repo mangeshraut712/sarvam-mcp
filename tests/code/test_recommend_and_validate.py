@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from sarvam_mcp.code.snippets import _recommend, _validate
 
-
 # ---- recommend ------------------------------------------------------------
 
 

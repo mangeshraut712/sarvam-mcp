@@ -1,8 +1,16 @@
 # sarvam-mcp
 
-Official Sarvam MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (Sarvam-M), Vision OCR — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed, OpenAI Agents) can call Sarvam with zero boilerplate.
+Official Sarvam MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (Sarvam-M / 30B / 105B), Vision Document Intelligence, Pronunciation Dictionaries — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed) can call Sarvam with zero boilerplate.
 
 ## Quickstart
+
+The fastest way is the one-line installer at **[mcp.sarvam.ai](https://mcp.sarvam.ai)** — auto-detects your MCP clients and wires them up:
+
+```bash
+curl -fsSL https://mcp.sarvam.ai/install | bash
+```
+
+Or install manually:
 
 ```bash
 pip install sarvam-mcp        # or:  uvx sarvam-mcp
@@ -23,7 +31,7 @@ Drop this JSON into your MCP client (same shape works in Cursor / Claude Desktop
 
 **No API key required up front.** The server starts with auth deferred and **prompts you for the key on the first tool call** via MCP elicitation (Cursor / Claude Desktop will show a popup). The key gets saved to `~/.sarvam/credentials` (mode `0600`) so subsequent runs don't ask.
 
-If your MCP client doesn't support elicitation, or you'd rather set the key ahead of time, three options:
+If your MCP client doesn't support elicitation, or you'd rather set the key ahead of time:
 
 ```bash
 # A) Interactive terminal setup (recommended for headless / scripted installs)
@@ -85,15 +93,26 @@ api_key = sk_...
 region = in
 ```
 
-## Status
+## Two namespaces
 
-Atomic tools + composite workflows (`/sv-voice`, `/sv-localize`, `/sv-recall`, `/sv-dub`) + code-builder tools (docs, snippets).
+The server exposes **27 tools** across two clean namespaces:
+
+- **`sarvam_tools_*`** — *runtime* tools. Call Sarvam APIs at runtime to do things (transcribe audio, generate speech, translate text, ask Sarvam-M, run composite voice/dub/localize/recall workflows). 16 tools.
+- **`sarvam_code_*`** — *builder* tools. Help an agent **write code that uses Sarvam**: search docs, look up endpoint shapes, list supported languages and speakers, validate request bodies, recommend models, fetch tested code snippets, scaffold starter projects (`simple-tts-cli`, `python-voice-bot`, `nextjs-translator`). 11 tools — no API key needed for most of them.
+
+> **"Translate this paragraph to Hindi."** → `sarvam_tools_translate` invokes Sarvam.
+>
+> **"Build me an Indic translator app in Next.js."** → `sarvam_code_scaffold` writes a working starter project to disk; `sarvam_code_snippet` provides tested glue code.
+
+## Companion repo
+
+The **install website** at [mcp.sarvam.ai](https://mcp.sarvam.ai) lives in [`sarvamai/sarvam-mcp-website`](https://github.com/sarvamai/sarvam-mcp-website) (Next.js + Tatva, deployed on Sarvam k8s). This repo is just the Python package.
 
 ## Development
 
 ```bash
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
-pytest -q
-mcp dev src/sarvam_mcp/server.py    # MCP Inspector
+pytest -q                              # 51 tests
+mcp dev src/sarvam_mcp/server.py       # MCP Inspector
 ```

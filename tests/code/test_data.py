@@ -34,7 +34,7 @@ def test_default_speaker_priya_is_v3():
 
 def test_pricing_table_covers_every_model_in_reference():
     referenced_models: set[str] = set()
-    for endpoint, ref in _data.API_REFERENCE.items():
+    for _endpoint, ref in _data.API_REFERENCE.items():
         if model_str := ref.get("model"):
             for chunk in model_str.split(","):
                 # Pull bare model ids out of the human-readable list.
