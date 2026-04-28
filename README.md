@@ -87,7 +87,7 @@ region = in
 
 ## Status
 
-Atomic tools + composite workflows (`/sv-voice`, `/sv-localize`, `/sv-recall`, `/sv-dub`) + code-builder tools (docs, snippets, scaffolders).
+Atomic tools + composite workflows (`/sv-voice`, `/sv-localize`, `/sv-recall`, `/sv-dub`) + code-builder tools (docs, snippets).
 
 ## Development
 

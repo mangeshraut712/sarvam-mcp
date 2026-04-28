@@ -29,7 +29,6 @@ Use when the user is **building an app** that calls Sarvam APIs:
 - "How do I call the TTS endpoint from Python?"
 - "Which languages does STT support?"
 - "What speakers are available for Bulbul v3?"
-- "Scaffold me a Next.js app with Sarvam translation"
 - "What's the request shape for /translate?"
 
 These tools return documentation, code snippets, API reference, and project templates. They do NOT call the Sarvam API at runtime.
@@ -57,10 +56,9 @@ src/sarvam_mcp/
 ├── observability.py   # Latency + cost + request-id tracking
 ├── tools/             # Atomic tools — one Sarvam API call each
 ├── workflows/         # Composite tools — chain multiple atomic calls
-└── code/              # Builder tools — docs, snippets, scaffolders
+└── code/              # Builder tools — docs, snippets
     ├── _data.py       # Hard-coded reference tables
-    ├── _snippets.py   # Embedded code examples
-    └── templates/     # Scaffold project templates
+    └── _snippets.py   # Embedded code examples
 ```
 
 ## Conventions
@@ -69,5 +67,4 @@ src/sarvam_mcp/
 - Every tool that calls the Sarvam API starts with `sc = await ready_ctx(ctx)`.
 - Every tool response includes an `observability` dict with latency, request IDs, and credit usage.
 - `_data.py` and `_snippets.py` are reference tables — update carefully.
-- Scaffold templates in `code/templates/` contain `${VAR}` placeholders — ruff skips them.
 - Run `pytest -q` before committing.

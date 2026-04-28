@@ -53,16 +53,10 @@ Changelog = "https://github.com/sarvamai/sarvam-mcp/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sarvam_mcp"]
-# Make sure scaffold templates ship with the wheel.
-include = [
-    "src/sarvam_mcp/**/*.py",
-    "src/sarvam_mcp/code/templates/**/*",
-]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "src/sarvam_mcp",
-    "src/sarvam_mcp/code/templates/**/*",
     "README.md",
     "LICENSE",
     "pyproject.toml",
@@ -71,9 +65,6 @@ include = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-# Scaffold templates are not real source; they have ${VAR} placeholders
-# that look like syntax errors to ruff and shouldn't be linted as our code.
-extend-exclude = ["src/sarvam_mcp/code/templates"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM"]

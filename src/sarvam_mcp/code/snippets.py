@@ -61,7 +61,7 @@ def register(mcp: FastMCP) -> None:
             "Build-time tool — helps write code that uses Sarvam. For runtime actions, use sarvam_tools_* instead.\n\n"
             "Given a plain-English description of what the dev wants to "
             "build, recommend the right Sarvam model + language code + any "
-            "other key params. Useful as the first step when scaffolding a "
+            "other key params. Useful as the first step when starting a "
             "new Sarvam-using app. Uses heuristics (no LLM call), so it's "
             "fast and works without an API key."
         ),
