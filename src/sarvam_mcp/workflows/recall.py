@@ -28,8 +28,9 @@ MAX_CHARS = 24_000
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sv_recall",
+        name="sarvam_tools_recall",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Answer a natural-language question grounded in a set of files. "
             "Audio files are transcribed via Saarika; text/markdown files "
             "are read directly. Everything is concatenated (capped at "
@@ -52,7 +53,7 @@ def register(mcp: FastMCP) -> None:
             description="STT hint applied to every audio file.",
         ),
         max_files: int = Field(default=20, ge=1, le=100),
-        llm_model: str = Field(default="sarvam-m"),
+        llm_model: str = Field(default="sarvam-30b"),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
         files = _gather_files(paths, max_files)

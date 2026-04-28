@@ -14,18 +14,20 @@ CHAT_PATH = "/v1/chat/completions"
 
 ChatRole = Literal["system", "user", "assistant"]
 # Live-tested 2026-04-27 — exhaustive list of accepted models on this endpoint.
-SarvamLLM = Literal["sarvam-m", "sarvam-30b", "sarvam-105b"]
+# sarvam-m is legacy (24B); prefer sarvam-30b or sarvam-105b.
+SarvamLLM = Literal["sarvam-30b", "sarvam-105b", "sarvam-m"]
 
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sarvam_llm_complete",
+        name="sarvam_tools_llm_complete",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Generate chat completions with Sarvam's Indic-tuned LLMs.\n\n"
             "Models:\n"
-            "  • `sarvam-m` (default) — 24B, fastest, good for chat / agent loops\n"
-            "  • `sarvam-30b` — MoE, 2.4B active, balanced quality + cost\n"
-            "  • `sarvam-105b` — MoE flagship, best reasoning + tool use\n\n"
+            "  • `sarvam-30b` (default) — MoE, 2.4B active, balanced quality + cost\n"
+            "  • `sarvam-105b` — MoE flagship, best reasoning + tool use\n"
+            "  • `sarvam-m` — 24B, legacy (deprecated, migrate to sarvam-30b)\n\n"
             "All three speak 23 Indic languages with native, romanized, and "
             "code-mixed support. OpenAI-compatible message format."
         ),
@@ -39,8 +41,8 @@ def register(mcp: FastMCP) -> None:
             ),
         ),
         model: SarvamLLM = Field(
-            default="sarvam-m",
-            description="`sarvam-m` (default) | `sarvam-30b` | `sarvam-105b` (flagship).",
+            default="sarvam-30b",
+            description="`sarvam-30b` (default) | `sarvam-105b` (flagship) | `sarvam-m` (legacy).",
         ),
         temperature: float = Field(default=0.7, ge=0.0, le=2.0),
         top_p: float = Field(default=1.0, ge=0.0, le=1.0),

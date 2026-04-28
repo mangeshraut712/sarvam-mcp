@@ -25,8 +25,9 @@ TranslateModel = Literal["mayura:v1", "sarvam-translate:v1"]
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sarvam_translate",
+        name="sarvam_tools_translate",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Translate text between English and Indian languages.\n\n"
             "Two backing models:\n"
             "- `mayura:v1` — 11 languages, supports formal / colloquial / "

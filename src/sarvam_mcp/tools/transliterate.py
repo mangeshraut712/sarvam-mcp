@@ -15,8 +15,9 @@ TRANSLITERATE_PATH = "/transliterate"
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sarvam_transliterate",
+        name="sarvam_tools_transliterate",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Convert text between scripts without translating meaning. "
             "Examples: Devanagari → Roman ('नमस्ते' → 'namaste'), Tamil "
             "script → Latin, etc. Use `spoken_form=True` to expand digits "

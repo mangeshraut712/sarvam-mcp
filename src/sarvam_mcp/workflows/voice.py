@@ -28,8 +28,9 @@ from sarvam_mcp.workflows._helpers import (
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sv_voice",
+        name="sarvam_tools_voice",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "End-to-end voice agent loop: transcribe an Indic audio file, "
             "send the transcript to Sarvam-M for a reply, then synthesize "
             "the reply back into audio with Bulbul v3.\n\n"
@@ -60,7 +61,7 @@ def register(mcp: FastMCP) -> None:
             ),
         ),
         speaker: BulbulSpeaker = Field(default="priya"),
-        llm_model: str = Field(default="sarvam-m"),
+        llm_model: str = Field(default="sarvam-30b"),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
         path = Path(audio_path).expanduser()

@@ -29,8 +29,9 @@ from sarvam_mcp.workflows._helpers import (
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sv_dub",
+        name="sarvam_tools_dub",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Dub an Indic audio file into another Indic language. Pipeline: "
             "Saarika STT → Mayura/Sarvam-Translate → Bulbul TTS. Returns the "
             "original transcript, translated transcript, and a path to the "

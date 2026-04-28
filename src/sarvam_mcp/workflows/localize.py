@@ -25,8 +25,9 @@ MAX_STRINGS = 500
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sv_localize",
+        name="sarvam_tools_localize",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Translate a JSON or `key=value` string-table file into another "
             "language. Walks all string values (nested JSON supported), runs "
             "each through Sarvam-Translate, and writes a sibling file with "

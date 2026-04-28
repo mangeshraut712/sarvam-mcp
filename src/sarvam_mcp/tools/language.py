@@ -20,8 +20,9 @@ QuestionType = Literal["boolean", "enum", "short answer", "long answer", "number
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sarvam_identify_language",
+        name="sarvam_tools_identify_language",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Detect the language and script of input text. Returns BCP-47 "
             "language code (e.g. 'hi-IN') and script code (e.g. 'Devanagari'). "
             "Useful as a pre-step before TTS or translate to pick the right "
@@ -43,8 +44,9 @@ def register(mcp: FastMCP) -> None:
         }
 
     @mcp.tool(
-        name="sarvam_text_analytics",
+        name="sarvam_tools_text_analytics",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Run deep analysis on a piece of text by passing a list of typed "
             "questions. Each question needs `id`, `text`, and `type` "
             "(`boolean` | `enum` | `short answer` | `long answer` | `number`). "

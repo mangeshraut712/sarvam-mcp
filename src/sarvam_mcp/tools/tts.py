@@ -22,8 +22,9 @@ TtsModel = Literal["bulbul:v3", "bulbul:v3-beta", "bulbul:v2"]
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
-        name="sarvam_tts_speak",
+        name="sarvam_tools_tts_speak",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Generate speech from text using Bulbul v3 (latest). 11 Indic languages.\n\n"
             "Speaker hints (all Bulbul v3 voices):\n"
             "  • `priya` / `neha` / `pooja` — warm friendly female (default `priya`)\n"
@@ -108,13 +109,12 @@ def register(mcp: FastMCP) -> None:
         }
 
     @mcp.tool(
-        name="sarvam_tts_stream",
+        name="sarvam_tools_tts_stream",
         description=(
+            "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Streaming variant of sarvam_tts_speak using Bulbul WebSocket. "
             "Audio is streamed to disk in the background; the tool returns a "
-            "sarvam:// resource URI immediately. True low-latency streaming "
-            "to the client requires the hosted MCP (v1.1) — locally this "
-            "behaves like a slightly faster speak()."
+            "sarvam:// resource URI immediately."
         ),
     )
     async def sarvam_tts_stream(

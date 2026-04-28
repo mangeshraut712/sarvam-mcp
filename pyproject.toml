@@ -53,13 +53,27 @@ Changelog = "https://github.com/sarvamai/sarvam-mcp/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sarvam_mcp"]
+# Make sure scaffold templates ship with the wheel.
+include = [
+    "src/sarvam_mcp/**/*.py",
+    "src/sarvam_mcp/code/templates/**/*",
+]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/sarvam_mcp", "README.md", "pyproject.toml"]
+include = [
+    "src/sarvam_mcp",
+    "src/sarvam_mcp/code/templates/**/*",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Scaffold templates are not real source; they have ${VAR} placeholders
+# that look like syntax errors to ruff and shouldn't be linted as our code.
+extend-exclude = ["src/sarvam_mcp/code/templates"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM"]
@@ -69,6 +83,12 @@ ignore = ["B008", "A003"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B011"]
+# Data + snippet modules are mostly tables / embedded code blocks; the
+# line-length rule produces false positives that hurt readability.
+"src/sarvam_mcp/code/_data.py" = ["E501"]
+"src/sarvam_mcp/code/_snippets.py" = ["E501"]
+"src/sarvam_mcp/code/snippets.py" = ["E501"]
+"src/sarvam_mcp/code/docs.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

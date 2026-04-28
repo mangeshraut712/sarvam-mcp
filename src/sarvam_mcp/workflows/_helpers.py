@@ -33,7 +33,8 @@ async def stt_transcribe(
     audio_path: Path,
     *,
     language_code: str = "unknown",
-    model: str = "saarika:v2.5",
+    model: str = "saaras:v3",
+    mode: str = "transcribe",
     metrics: ToolMetrics | None = None,
 ) -> tuple[str, str | None]:
     """Run STT, returning (transcript, detected_language)."""
@@ -44,6 +45,8 @@ async def stt_transcribe(
             "language_code": language_code,
             "with_timestamps": "false",
         }
+        if model == "saaras:v3":
+            data["mode"] = mode
         body, call = await sc.client.post_multipart("/speech-to-text", data=data, files=files)
     if metrics is not None:
         metrics.merge(call)
@@ -113,7 +116,7 @@ async def llm_complete(
     sc: ServerContext,
     messages: list[dict[str, Any]],
     *,
-    model: str = "sarvam-m",
+    model: str = "sarvam-30b",
     temperature: float = 0.4,
     max_tokens: int = 600,
     metrics: ToolMetrics | None = None,

@@ -1,0 +1,22 @@
+{
+  "title": "Python Voice Bot",
+  "description": "Single-file Python script that takes an Indic audio file, transcribes it via Saarika, asks Sarvam-M for a reply, and synthesizes the reply with Bulbul. The minimal end-to-end voice agent loop.",
+  "stack": ["Python 3.11+"],
+  "uses_apis": ["speech-to-text (Saarika v2.5)", "chat completions (Sarvam-M)", "text-to-speech (Bulbul v3)"],
+  "options": {
+    "PROJECT_NAME":     "Project name. Defaults to the target directory name.",
+    "REPLY_LANGUAGE":   "BCP-47 code for the reply audio. Default: hi-IN.",
+    "DEFAULT_SPEAKER":  "Bulbul v3 speaker id. Default: priya."
+  },
+  "defaults": {
+    "REPLY_LANGUAGE":  "hi-IN",
+    "DEFAULT_SPEAKER": "priya"
+  },
+  "next_steps": [
+    "cd into the project directory",
+    "python3 -m venv .venv && source .venv/bin/activate",
+    "pip install -r requirements.txt",
+    "export SARVAM_API_KEY=sk_...   (https://dashboard.sarvam.ai)",
+    "python bot.py path/to/input.wav --out reply.wav"
+  ]
+}
