@@ -127,7 +127,9 @@ The server exposes **27 tools** across two clean namespaces:
 
 ## Companion repo
 
-The **install website** at [mcp.sarvam.ai](https://mcp.sarvam.ai) lives in [`sarvamai/sarvam-mcp-website`](https://github.com/sarvamai/sarvam-mcp-website) (Next.js + Tatva, deployed on Sarvam k8s). This repo is just the Python package.
+The **hosted endpoint** at [mcp.sarvam.ai](https://mcp.sarvam.ai) runs this Python backend.
+
+To use it with Claude Desktop or other MCP clients, see the [Installation](#installation) section.
 
 ## Development
 

@@ -1,7 +1,8 @@
 steps:
+  # ----- 1. Login to Azure Container Registry --------------------------------
   - id: acr-login
-    name: docker
-    entrypoint: sh
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
     args:
       - -c
       - |
@@ -12,8 +13,9 @@ steps:
       - ACR_SP_USER
       - ACR_SP_PASSWORD
 
+  # ----- 2. Build the Docker image ------------------------------------------
   - id: docker-build
-    name: docker
+    name: gcr.io/cloud-builders/docker
     args:
       - build
       - -f
@@ -24,12 +26,40 @@ steps:
       - gitopsdocker.azurecr.io/sarvam-mcp:latest
       - .
 
+  # ----- 3. Push to ACR ------------------------------------------------------
   - id: docker-push
-    name: docker
+    name: gcr.io/cloud-builders/docker
     args:
       - push
       - --all-tags
       - gitopsdocker.azurecr.io/sarvam-mcp
+
+  # ----- 4. Deploy to Cloud Run ----------------------------------------------
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        if [[ "$TAG_NAME" == *-qa ]]; then
+          _ENV="qa"
+        elif [[ "$TAG_NAME" == *-staging ]]; then
+          _ENV="staging"
+        elif [[ "$TAG_NAME" == *-prod ]]; then
+          _ENV="prod"
+        else
+          echo "Tag $TAG_NAME does not match deployment pattern. Skipping deploy."
+          exit 0
+        fi
+        
+        gcloud run deploy sarvam-mcp-$${_ENV} \
+          --image gitopsdocker.azurecr.io/sarvam-mcp:$TAG_NAME \
+          --region asia-south1 \
+          --project gitops-421705 \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8000 \
+          --set-env-vars="SARVAM_MCP_TRANSPORT=http"
 
 availableSecrets:
   secretManager:
@@ -39,3 +69,6 @@ availableSecrets:
       env: ACR_SP_PASSWORD
     - versionName: projects/gitops-421705/secrets/ACR_SP_TENANT/versions/latest
       env: ACR_SP_TENANT
+
+options:
+  logging: CLOUD_LOGGING_ONLY
