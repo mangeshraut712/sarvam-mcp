@@ -1,0 +1,6 @@
+dependencies:
+- name: modules
+  repository: oci://gitopsdocker.azurecr.io/helm
+  version: 0.6.0
+digest: sha256:e6e5df916c418c3a319dd89dc9176a636f39b99f3644f400179d7c764f8ef3ad
+generated: "2026-04-28T17:40:18.269937+05:30"

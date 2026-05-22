@@ -1,0 +1,18 @@
+{{- $serviceValues := index .Values "sarvam-mcp-website" -}}
+
+{{- range $container := $serviceValues.containers }}
+  {{- $commonEnv := $.Values.commonEnv | default list }}
+  {{- $containerEnv := $container.env | default list }}
+  {{- $mergedEnv := concat $commonEnv $containerEnv }}
+  {{- $_ := set $container "env" $mergedEnv }}
+{{- end }}
+
+{{ include "modules.deployment" $serviceValues }}
+---
+{{ include "modules.service" $serviceValues }}
+---
+{{ include "modules.hpa" $serviceValues }}
+---
+{{ include "modules.ingress" $serviceValues }}
+---
+{{ include "modules.serviceAccount" $serviceValues }}

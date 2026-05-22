@@ -24,6 +24,10 @@ steps:
       - gitopsdocker.azurecr.io/sarvam-mcp:$TAG_NAME
       - -t
       - gitopsdocker.azurecr.io/sarvam-mcp:latest
+      - -t
+      - gitopsdocker.azurecr.io/sarvam-mcp-website:$TAG_NAME
+      - -t
+      - gitopsdocker.azurecr.io/sarvam-mcp-website:latest
       - .
 
   # ----- 3. Push to ACR ------------------------------------------------------
@@ -33,6 +37,12 @@ steps:
       - push
       - --all-tags
       - gitopsdocker.azurecr.io/sarvam-mcp
+  - id: docker-push-website
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - gitopsdocker.azurecr.io/sarvam-mcp-website
 
   # ----- 4. Deploy to Cloud Run ----------------------------------------------
   - id: deploy

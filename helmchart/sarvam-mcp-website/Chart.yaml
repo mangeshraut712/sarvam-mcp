@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sarvam-mcp-website
+description: Public landing site + installer for Sarvam MCP (mcp.sarvam.ai)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: modules
+    version: "0.6.0"
+    repository: "oci://gitopsdocker.azurecr.io/helm"

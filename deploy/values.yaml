@@ -1,0 +1,83 @@
+# Production deployment for sarvam-mcp-website.
+# Single env (no qa/staging tier — this is a static-ish marketing site).
+#
+# To deploy a new image: bump `tag` here and push to the gitops repo
+# (sarvam-azure-common-gitops/deploy-configs/<env>/config.yaml).
+
+commonEnv: []
+
+sarvam-mcp-website:
+  name: "sarvam-mcp-website"
+  namespace: "apps-authoring"
+
+  serviceAccount:
+    enabled: true
+    name: "sarvam-mcp-website"
+
+  apply_default_liveness_probe: true
+  liveliness_probe_port: 8080
+  # Override the probe path to hit our Next.js /health route specifically.
+  liveness_probe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 5
+  readiness_probe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+  containers:
+    - name: "sarvam-mcp-website"
+      image: "gitopsdocker.azurecr.io/sarvam-mcp-website"
+      tag: "latest"
+      imagePullPolicy: Always
+      ports:
+        http:
+          container_port: 8080
+          port: 80
+          protocol: TCP
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+
+  kube_service_config:
+    type: "ClusterIP"
+    ports:
+      http:
+        port: 80
+        protocol: "TCP"
+        targetPort: 8080
+
+  ingress:
+    enabled: true
+    platform: azure
+    AFD: true
+    rewrite: false
+    name: sarvam-mcp-website-ingress
+    class: kong
+    clusterIssuer: letsencrypt-prod
+    host: mcp.sarvam.ai
+    servicePort: 80
+    routes:
+      - path: /
+        port: 80
+
+  hpa:
+    min_replicas: 2
+    max_replicas: 4
+    resource_metrics:
+      - name: cpu
+        target_type: Utilization
+        target_value: 70
+      - name: memory
+        target_type: Utilization
+        target_value: 70
