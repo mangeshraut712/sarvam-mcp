@@ -31,7 +31,11 @@ _mcp = build_server()
 
 @_mcp.custom_route("/health", methods=["GET"])
 async def health_check(request):  # noqa: ARG001
-    return JSONResponse({"status": "ok", "service": "sarvam-mcp"})
+    return JSONResponse({
+        "status": "ok",
+        "service": "sarvam-mcp",
+        "message": "MCP server is running"
+    })
 
 
 @_mcp.custom_route("/ready", methods=["GET"])
