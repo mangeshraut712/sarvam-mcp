@@ -76,9 +76,13 @@ def build_server() -> FastMCP:
     pronunciation.register(mcp)
 
 
-    from sarvam_mcp import code
+    from sarvam_mcp import code, workflows
 
     code.register(mcp)
+    workflows.voice.register(mcp)
+    workflows.dub.register(mcp)
+    workflows.localize.register(mcp)
+    workflows.recall.register(mcp)
 
     return mcp
 
