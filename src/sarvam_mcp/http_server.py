@@ -20,7 +20,6 @@ os.environ.setdefault("SARVAM_MCP_TRANSPORT", "http")
 from starlette.middleware import Middleware  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.responses import JSONResponse  # noqa: E402
-
 from sarvam_mcp.auth.header import APIKeyAuthMiddleware  # noqa: E402
 from sarvam_mcp.server import build_server  # noqa: E402
 
@@ -59,6 +58,24 @@ _middleware = [
     ),
     Middleware(APIKeyAuthMiddleware),
 ]
+
+from sarvam_mcp.oauth.server import (  # noqa: E402
+    well_known_protected_resource,
+    well_known_authorization_server,
+    oauth_register,
+    oauth_authorize,
+    oauth_token,
+)
+
+_mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET", "OPTIONS"])(
+    well_known_protected_resource
+)
+_mcp.custom_route("/.well-known/oauth-authorization-server", methods=["GET", "OPTIONS"])(
+    well_known_authorization_server
+)
+_mcp.custom_route("/oauth/register", methods=["POST", "OPTIONS"])(oauth_register)
+_mcp.custom_route("/oauth/authorize", methods=["GET", "POST", "OPTIONS"])(oauth_authorize)
+_mcp.custom_route("/oauth/token", methods=["POST", "OPTIONS"])(oauth_token)
 
 app = _mcp.http_app(path="/mcp", middleware=_middleware)
 
