@@ -77,8 +77,6 @@ availableSecrets:
       env: ACR_SP_USER
     - versionName: projects/gitops-421705/secrets/ACR_SP_PASSWORD/versions/latest
       env: ACR_SP_PASSWORD
-    - versionName: projects/gitops-421705/secrets/ACR_SP_TENANT/versions/latest
-      env: ACR_SP_TENANT
 
 options:
   logging: CLOUD_LOGGING_ONLY
