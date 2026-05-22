@@ -1,0 +1,48 @@
+steps:
+  - id: gar-auth
+    name: gcr.io/cloud-builders/gcloud
+    args:
+      - auth
+      - configure-docker
+      - us-central1-docker.pkg.dev
+
+  - id: acr-login
+    name: docker
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        docker login gitopsdocker.azurecr.io \
+          --username=$$ACR_SP_USER \
+          --password=$$ACR_SP_PASSWORD
+    secretEnv:
+      - ACR_SP_USER
+      - ACR_SP_PASSWORD
+
+  - id: docker-build
+    name: docker
+    args:
+      - build
+      - -f
+      - tools/sarvam-mcp/Dockerfile
+      - -t
+      - gitopsdocker.azurecr.io/sarvam-mcp:$TAG_NAME
+      - -t
+      - gitopsdocker.azurecr.io/sarvam-mcp:latest
+      - .
+
+  - id: docker-push
+    name: docker
+    args:
+      - push
+      - --all-tags
+      - gitopsdocker.azurecr.io/sarvam-mcp
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/gitops-421705/secrets/ACR_SP_USER/versions/latest
+      env: ACR_SP_USER
+    - versionName: projects/gitops-421705/secrets/ACR_SP_PASSWORD/versions/latest
+      env: ACR_SP_PASSWORD
+    - versionName: projects/gitops-421705/secrets/ACR_SP_TENANT/versions/latest
+      env: ACR_SP_TENANT

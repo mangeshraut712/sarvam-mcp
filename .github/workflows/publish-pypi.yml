@@ -1,8 +1,3 @@
-# Publishes to https://pypi.org/project/sarvam-mcp/ when a version tag (v*) is pushed.
-# Configure "Trusted publishing" in PyPI (account → Publishing → add pending publisher):
-#   workflow: publish-pypi.yml, repository: <org>/sarvam-mcp (optional: environment name if you use GHA environments).
-# Or use a one-off local upload: UV_PUBLISH_TOKEN=pypi-__token__... uv publish
-
 name: Publish to PyPI
 
 on:
@@ -12,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   publish:
@@ -36,3 +30,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          password: ${{ secrets.PYPI_TOKEN }}
