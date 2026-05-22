@@ -1,5 +1,4 @@
 steps:
-  # ----- 1. Login to Azure Container Registry --------------------------------
   - id: acr-login
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -7,13 +6,11 @@ steps:
       - -c
       - |
         docker login gitopsdocker.azurecr.io \
-          --username=$$ACR_SP_USER \
-          --password=$$ACR_SP_PASSWORD
+          --username=gitopsdocker \
+          --password=$$AZURE_GITOPSDOCKER_PASSWORD
     secretEnv:
-      - ACR_SP_USER
-      - ACR_SP_PASSWORD
+      - AZURE_GITOPSDOCKER_PASSWORD
 
-  # ----- 2. Build the Docker image ------------------------------------------
   - id: docker-build
     name: gcr.io/cloud-builders/docker
     args:
@@ -30,13 +27,13 @@ steps:
       - gitopsdocker.azurecr.io/sarvam-mcp-website:latest
       - .
 
-  # ----- 3. Push to ACR ------------------------------------------------------
   - id: docker-push
     name: gcr.io/cloud-builders/docker
     args:
       - push
       - --all-tags
       - gitopsdocker.azurecr.io/sarvam-mcp
+
   - id: docker-push-website
     name: gcr.io/cloud-builders/docker
     args:
@@ -44,7 +41,6 @@ steps:
       - --all-tags
       - gitopsdocker.azurecr.io/sarvam-mcp-website
 
-  # ----- 4. Deploy to Cloud Run ----------------------------------------------
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
@@ -73,10 +69,8 @@ steps:
 
 availableSecrets:
   secretManager:
-    - versionName: projects/gitops-421705/secrets/ACR_SP_USER/versions/latest
-      env: ACR_SP_USER
-    - versionName: projects/gitops-421705/secrets/ACR_SP_PASSWORD/versions/latest
-      env: ACR_SP_PASSWORD
+    - versionName: projects/gitops-421705/secrets/azure-gitopsdocker-password/versions/latest
+      env: AZURE_GITOPSDOCKER_PASSWORD
 
 options:
   logging: CLOUD_LOGGING_ONLY
