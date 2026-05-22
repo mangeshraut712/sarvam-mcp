@@ -1,11 +1,4 @@
 steps:
-  - id: gar-auth
-    name: gcr.io/cloud-builders/gcloud
-    args:
-      - auth
-      - configure-docker
-      - us-central1-docker.pkg.dev
-
   - id: acr-login
     name: docker
     entrypoint: sh

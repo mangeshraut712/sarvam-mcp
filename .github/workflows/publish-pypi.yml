@@ -2,7 +2,7 @@ name: Publish to PyPI
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*-qa"]
   workflow_dispatch:
 
 permissions:
@@ -14,10 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
         with:
           version: "0.6.14"
+
+      - name: Verify tag version matches pyproject.toml
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # Strip environment suffix (e.g. v0.1.1-qa → 0.1.1)
+          TAG_VERSION="${TAG#v}"
+          TAG_VERSION="${TAG_VERSION%-qa}"
+          PKG_VERSION="$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          echo "Tag version: $TAG_VERSION"
+          echo "Package version: $PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "ERROR: Tag version ($TAG_VERSION) does not match pyproject.toml version ($PKG_VERSION)"
+            exit 1
+          fi
 
       - name: Sync dev deps and run tests
         run: |
