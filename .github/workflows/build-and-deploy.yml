@@ -2,46 +2,83 @@ name: Build, Push & Deploy
 
 on:
   push:
-    tags: ["v*-prod"]
+    tags: ["v*-prod", "v*-staging", "v*-qa"]
 
 env:
-  REGISTRY: gitopsdocker.azurecr.io
-  IMAGE_NAME: sarvam-mcp
+  AZURE_USERNAME: "gitopsdocker"
+  AZURE_REGISTRY: "gitopsdocker.azurecr.io"
   HELM_REPO: sarvamai/sarvam-helm-charts
   HELM_VALUES_PATH: azure/platform/saas-prod/sarvam-mcp/values.yaml
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, size-small]
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Log in to Azure Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Extract tag
+      - name: Login to Azure
+        run: |
+          echo "$AZURE_REGISTRY_PASSWORD" | docker login ${{ env.AZURE_REGISTRY }} \
+            -u ${{ env.AZURE_USERNAME }} --password-stdin
+
+      - name: Production Gate Check
+        shell: bash
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          if [[ "$TAG_NAME" == *"-prod" ]]; then
+            echo "Production tag detected. Verifying branch lineage..."
+            if git merge-base --is-ancestor ${{ github.sha }} origin/main; then
+              echo "Success: Tagged commit exists on the main branch."
+            else
+              echo "FAILURE: Production tags must match a commit on main."
+              exit 1
+            fi
+          else
+            echo "QA/Staging tag detected. Skipping Production Gate."
+          fi
+
+      - name: Determine Tags
         id: meta
-        run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+        shell: bash
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          TAG_NAME="${{ github.ref_name }}"
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+          if echo "$TAG_NAME" | grep -q '\-prod$'; then
+            ENV_TAG="latest"
+          elif echo "$TAG_NAME" | grep -q '\-staging$'; then
+            ENV_TAG="latest-staging"
+          else
+            ENV_TAG="latest-qa"
+          fi
+
+          IMAGE_NAME="sarvam-mcp"
+          AZURE_IMAGE="${{ env.AZURE_REGISTRY }}/$IMAGE_NAME"
+          TAGS="${AZURE_IMAGE}:${TAG_NAME},${AZURE_IMAGE}:${SHORT_SHA},${AZURE_IMAGE}:${ENV_TAG}"
+
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: tools/sarvam-mcp/Dockerfile
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=registry,ref=${{ env.AZURE_REGISTRY }}/sarvam-mcp:buildcache
+          cache-to: type=registry,ref=${{ env.AZURE_REGISTRY }}/sarvam-mcp:buildcache,mode=max
 
   update-helm-values:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    if: contains(github.ref_name, '-prod')
+    runs-on: [self-hosted, size-small]
     steps:
       - name: Checkout helm-charts repo
         uses: actions/checkout@v4
