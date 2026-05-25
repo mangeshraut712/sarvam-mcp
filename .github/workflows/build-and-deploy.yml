@@ -1,29 +1,23 @@
-name: Build, Push & Deploy
+name: Build and Push Container
 
 on:
   push:
     branches: [main]
-    tags: ["v*-prod", "v*-staging", "v*-qa"]
+    tags: ["v*"]
 
-# Security: only run workflows from the default branch, not from forks or PRs
 permissions:
   contents: read
 
 env:
   AZURE_USERNAME: "gitopsdocker"
   AZURE_REGISTRY: "gitopsdocker.azurecr.io"
-  HELM_REPO: sarvamai/sarvam-helm-charts
-  HELM_VALUES_PATH: azure/platform/saas-prod/sarvam-mcp/values.yaml
 
 jobs:
   build-and-push:
     runs-on: [self-hosted, size-small-public]
     if: |
       github.repository == 'sarvamai/sarvam-mcp' &&
-      (github.event_name == 'push') &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-    outputs:
-      tag: ${{ steps.meta.outputs.tag }}
+      github.event_name == 'push'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,18 +31,15 @@ jobs:
             -u ${{ env.AZURE_USERNAME }} --password-stdin
 
       - name: Production Gate Check
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, '-prod')
         shell: bash
         run: |
-          TAG_NAME="${{ github.ref_name }}"
-          if [[ "$TAG_NAME" == *"-prod" ]]; then
-            echo "Production tag detected. Verifying branch lineage..."
-            if git merge-base --is-ancestor ${{ github.sha }} origin/main; then
-              echo "Success: Tagged commit exists on the main branch."
-            else
-              echo "FAILURE: Production tags must match a commit on main."
-              exit 1
-            fi
+          echo "Production tag detected. Verifying branch lineage..."
+          if git merge-base --is-ancestor ${{ github.sha }} origin/main; then
+            echo "Success: Tagged commit exists on the main branch."
+          else
+            echo "FAILURE: Production tags must match a commit on main."
+            exit 1
           fi
 
       - name: Determine Tags
@@ -60,10 +51,9 @@ jobs:
           AZURE_IMAGE="${{ env.AZURE_REGISTRY }}/$IMAGE_NAME"
 
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            # Push to main — build with SHA and latest-prod tag
             VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
             TAG_NAME="v${VERSION}-prod"
-            TAGS="${AZURE_IMAGE}:${TAG_NAME},${AZURE_IMAGE}:${SHORT_SHA},${AZURE_IMAGE}:latest"
+            ENV_TAG="latest"
           else
             TAG_NAME="${{ github.ref_name }}"
             if echo "$TAG_NAME" | grep -q '\-prod$'; then
@@ -73,11 +63,11 @@ jobs:
             else
               ENV_TAG="latest-qa"
             fi
-            TAGS="${AZURE_IMAGE}:${TAG_NAME},${AZURE_IMAGE}:${SHORT_SHA},${AZURE_IMAGE}:${ENV_TAG}"
           fi
 
+          TAGS="${AZURE_IMAGE}:${TAG_NAME},${AZURE_IMAGE}:${SHORT_SHA},${AZURE_IMAGE}:${ENV_TAG}"
+          echo "Calculated Tags: $TAGS"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -88,30 +78,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=${{ env.AZURE_REGISTRY }}/sarvam-mcp:buildcache
           cache-to: type=registry,ref=${{ env.AZURE_REGISTRY }}/sarvam-mcp:buildcache,mode=max
-
-  update-helm-values:
-    needs: build-and-push
-    if: github.ref_name == 'main' || contains(github.ref_name, '-prod')
-    runs-on: [self-hosted, size-small-public]
-    steps:
-      - name: Checkout helm-charts repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.HELM_REPO }}
-          token: ${{ secrets.HELM_CHARTS_PAT }}
-          ref: main
-
-      - name: Update image tag in values.yaml
-        run: |
-          TAG="${{ needs.build-and-push.outputs.tag }}"
-          sed -i "s|tag: \".*\"|tag: \"${TAG}\"|" "${{ env.HELM_VALUES_PATH }}"
-          echo "Updated tag to ${TAG}"
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          TAG="${{ needs.build-and-push.outputs.tag }}"
-          git add "${{ env.HELM_VALUES_PATH }}"
-          git commit -m "chore(sarvam-mcp): bump image tag to ${TAG}"
-          git push
