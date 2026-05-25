@@ -5,6 +5,10 @@ on:
     branches: [main]
     tags: ["v*-prod", "v*-staging", "v*-qa"]
 
+# Security: only run workflows from the default branch, not from forks or PRs
+permissions:
+  contents: read
+
 env:
   AZURE_USERNAME: "gitopsdocker"
   AZURE_REGISTRY: "gitopsdocker.azurecr.io"
@@ -13,7 +17,11 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted, size-small]
+    runs-on: [self-hosted, size-small-public]
+    if: |
+      github.repository == 'sarvamai/sarvam-mcp' &&
+      (github.event_name == 'push') &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
@@ -84,7 +92,7 @@ jobs:
   update-helm-values:
     needs: build-and-push
     if: github.ref_name == 'main' || contains(github.ref_name, '-prod')
-    runs-on: [self-hosted, size-small]
+    runs-on: [self-hosted, size-small-public]
     steps:
       - name: Checkout helm-charts repo
         uses: actions/checkout@v4
