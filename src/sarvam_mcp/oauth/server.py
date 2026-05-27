@@ -10,6 +10,7 @@ import logging
 import os
 from urllib.parse import urlencode
 
+import httpx
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.routing import Route
@@ -21,8 +22,13 @@ logger = logging.getLogger("sarvam_mcp.oauth")
 
 ISSUER = os.environ.get("SARVAM_MCP_ISSUER", "https://mcp.sarvam.ai")
 MCP_RESOURCE = os.environ.get("SARVAM_MCP_RESOURCE", "https://mcp.sarvam.ai/mcp")
-DASHBOARD_LOGIN_URL = os.environ.get(
-    "SARVAM_DASHBOARD_LOGIN_URL", "https://dashboard.sarvam.ai/login"
+KRATOS_LOGIN_URL = os.environ.get(
+    "SARVAM_KRATOS_LOGIN_URL",
+    "https://login.sarvam.ai/identity/self-service/login/browser",
+)
+DASHBOARD_TOKEN_URL = os.environ.get(
+    "SARVAM_DASHBOARD_TOKEN_URL",
+    "https://dashboard.sarvam.ai/api/auth/token",
 )
 _DASHBOARD_AUTH_COOKIE = "dashboard_auth"
 _KRATOS_SESSION_COOKIE = "sarvam_identity_session"
@@ -120,8 +126,8 @@ async def oauth_authorize(request: Request) -> Response:
         code_challenge = params.get("code_challenge", "")
         code_challenge_method = params.get("code_challenge_method", "")
 
-        # Check if user already has a dashboard session (cookie or token param).
-        token = _extract_session_token(request)
+        # Check if user has a session (cookie or token param).
+        token = await _resolve_session_to_jwt(request)
 
         if token:
             # User is authenticated — issue code and redirect back.
@@ -136,10 +142,12 @@ async def oauth_authorize(request: Request) -> Response:
             location = f"{redirect_uri}{separator}{urlencode({'code': code, 'state': state})}"
             return RedirectResponse(location, status_code=302)
 
-        # No session — redirect to dashboard login with return_to back here.
+        # No session — redirect to Kratos login with return_to back here.
         authorize_url = str(request.url)
-        login_url = f"{DASHBOARD_LOGIN_URL}?{urlencode({'return_to': authorize_url})}"
-        logger.info("No session found, redirecting to dashboard login: %s", login_url)
+        login_url = (
+            f"{KRATOS_LOGIN_URL}?{urlencode({'return_to': authorize_url, 'aal': 'aal1'})}"
+        )
+        logger.info("No session found, redirecting to Kratos login")
         return RedirectResponse(login_url, status_code=302)
 
     # POST — legacy form submission (kept for backward compat)
@@ -179,13 +187,13 @@ async def oauth_authorize(request: Request) -> Response:
     return RedirectResponse(location, status_code=302)
 
 
-def _extract_session_token(request: Request) -> str | None:
-    """Extract a session token from the request (cookie or query param).
+async def _resolve_session_to_jwt(request: Request) -> str | None:
+    """Try to get a dashboard JWT from the request.
 
     Priority:
-      1. `token` query param (passed by dashboard after login redirect)
-      2. `dashboard_auth` cookie (JWT, shared on .sarvam.ai domain)
-      3. `sarvam_identity_session` cookie (Kratos session)
+      1. `token` query param (explicit JWT passed in URL)
+      2. `dashboard_auth` cookie (already have a JWT)
+      3. `sarvam_identity_session` cookie → exchange for JWT via dashboard
     """
     if token := request.query_params.get("token"):
         return token.strip()
@@ -193,8 +201,30 @@ def _extract_session_token(request: Request) -> str | None:
     if cookie := request.cookies.get(_DASHBOARD_AUTH_COOKIE):
         return cookie.strip()
 
-    if cookie := request.cookies.get(_KRATOS_SESSION_COOKIE):
-        return cookie.strip()
+    kratos_session = request.cookies.get(_KRATOS_SESSION_COOKIE)
+    if not kratos_session:
+        return None
+
+    # Exchange the Kratos session for a dashboard JWT.
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                DASHBOARD_TOKEN_URL,
+                cookies={_KRATOS_SESSION_COOKIE: kratos_session},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                jwt_token = data.get("token")
+                if jwt_token:
+                    logger.info("Exchanged Kratos session for dashboard JWT")
+                    return jwt_token
+            logger.warning(
+                "Dashboard token exchange failed: %d %s",
+                resp.status_code,
+                resp.text[:200],
+            )
+    except Exception as exc:
+        logger.warning("Failed to exchange Kratos session for JWT: %r", exc)
 
     return None
 
