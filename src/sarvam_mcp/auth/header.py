@@ -47,12 +47,14 @@ def _extract_api_key(request: Request) -> str | None:
 
 def _is_exempt(path: str) -> bool:
     """Check if a path is exempt from auth."""
-    exempt_exact = {"/health", "/healthz", "/ready"}
+    exempt_exact = {"/", "/health", "/healthz", "/ready"}
     if path in exempt_exact:
         return True
     if path.startswith("/.well-known/"):
         return True
     if path.startswith("/oauth/"):
+        return True
+    if path.startswith("/static/"):
         return True
     return False
 

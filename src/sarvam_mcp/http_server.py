@@ -14,18 +14,118 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from pathlib import Path
 
 os.environ.setdefault("SARVAM_MCP_TRANSPORT", "http")
 
 from starlette.middleware import Middleware  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
-from starlette.responses import JSONResponse  # noqa: E402
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse  # noqa: E402
 from sarvam_mcp.auth.header import APIKeyAuthMiddleware  # noqa: E402
 from sarvam_mcp.server import build_server  # noqa: E402
 
 logger = logging.getLogger("sarvam_mcp.http")
 
+_STATIC_DIR = Path(__file__).parent / "static"
+
+_LANDING_HTML = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sarvam MCP</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Matter", system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      position: relative;
+      width: 100%;
+      max-width:600px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #f0f0f0;
+      background: #fff;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center;
+    }
+    .logo { height: 32px; margin: 8px auto 4px; }
+    p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .cmd {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 20px;
+      padding: 14px 16px;
+      border: 1px solid #f0f0f0;
+      background: #f5f5f5;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .cmd:hover { border-color: #e6e6e6; }
+    .cmd code {
+      flex: 1;
+      font-family: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+      font-size: 13px;
+      color: #141414;
+      user-select: all;
+      word-break: break-all;
+      text-align: left;
+    }
+    .cmd .copy-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    .cmd:hover .copy-icon { color: #141414; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/static/sarvam-logo.png" alt="sarvam" class="logo">
+    <p>Paste this into your agent/harness to get started.</p>
+    <div class="cmd" onclick="navigator.clipboard.writeText(document.getElementById('u').textContent).then(()=>{var i=document.getElementById('ci');i.innerHTML='<path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M5 13l4 4L19 7&quot;/>';i.style.color='#16a34a';setTimeout(()=>{i.innerHTML='<rect x=&quot;9&quot; y=&quot;9&quot; width=&quot;13&quot; height=&quot;13&quot; rx=&quot;2&quot; ry=&quot;2&quot; stroke-width=&quot;2&quot;/><path d=&quot;M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1&quot; stroke-width=&quot;2&quot;/>';i.style.color=''},1500)})">
+      <code id="u">Install the Sarvam MCP server: https://mcp.sarvam.ai/mcp</code>
+      <svg id="ci" class="copy-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/></svg>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
 _mcp = build_server()
+
+
+@_mcp.custom_route("/", methods=["GET"])
+async def landing(request):  # noqa: ARG001
+    return HTMLResponse(_LANDING_HTML)
+
+
+@_mcp.custom_route("/static/{path:path}", methods=["GET"])
+async def static_files(request):
+    file_path = _STATIC_DIR / request.path_params["path"]
+    if file_path.is_file() and _STATIC_DIR in file_path.resolve().parents:
+        return FileResponse(file_path)
+    return JSONResponse({"error": "not found"}, status_code=404)
 
 
 @_mcp.custom_route("/health", methods=["GET"])
