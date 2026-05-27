@@ -144,6 +144,8 @@ async def oauth_authorize(request: Request) -> Response:
 
         # No session — redirect to Kratos login with return_to back here.
         authorize_url = str(request.url)
+        if authorize_url.startswith("http://") and request.headers.get("x-forwarded-proto") == "https":
+            authorize_url = "https://" + authorize_url[7:]
         login_url = (
             f"{KRATOS_LOGIN_URL}?{urlencode({'return_to': authorize_url, 'aal': 'aal1'})}"
         )
