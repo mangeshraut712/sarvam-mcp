@@ -77,7 +77,7 @@ _mcp.custom_route("/oauth/register", methods=["POST", "OPTIONS"])(oauth_register
 _mcp.custom_route("/oauth/authorize", methods=["GET", "POST", "OPTIONS"])(oauth_authorize)
 _mcp.custom_route("/oauth/token", methods=["POST", "OPTIONS"])(oauth_token)
 
-app = _mcp.http_app(path="/mcp", middleware=_middleware)
+app = _mcp.http_app(path="/mcp", middleware=_middleware, stateless_http=True)
 
 
 def main_http() -> None:
