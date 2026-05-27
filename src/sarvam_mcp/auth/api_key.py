@@ -4,9 +4,10 @@ from __future__ import annotations
 
 
 class StaticKeyProvider:
-    """Wraps a static Sarvam API subscription key.
+    """Wraps a static Sarvam API subscription key or a dashboard JWT.
 
-    Sarvam's HTTP APIs authenticate via the ``api-subscription-key`` header.
+    Sarvam's HTTP APIs authenticate via the ``api-subscription-key`` header
+    for sk_* keys, or ``Authorization: Bearer`` for dashboard JWTs.
     """
 
     def __init__(self, api_key: str) -> None:
@@ -15,15 +16,16 @@ class StaticKeyProvider:
         self._key = api_key
 
     async def headers(self, *, scope: str | None = None) -> dict[str, str]:
-        # ``scope`` is ignored for static keys — they're not user-scoped.
-        return {"api-subscription-key": self._key}
+        if self._key.startswith("sk_"):
+            return {"api-subscription-key": self._key}
+        return {"Authorization": f"Bearer {self._key}"}
 
     async def refresh(self) -> None:
-        # Static keys don't expire on a refresh schedule we control.
         return None
 
     @property
     def principal(self) -> str:
-        # Last four chars only — enough to disambiguate keys in logs.
         suffix = self._key[-4:] if len(self._key) >= 4 else "****"
-        return f"api-key:****{suffix}"
+        if self._key.startswith("sk_"):
+            return f"api-key:****{suffix}"
+        return f"jwt:****{suffix}"

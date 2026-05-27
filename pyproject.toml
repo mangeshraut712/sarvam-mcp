@@ -32,6 +32,7 @@ dependencies = [
     "anyio>=4.3",
     "uvicorn>=0.29.0",
     "starlette>=0.37.0",
+    "PyJWT[crypto]>=2.8",
 ]
 
 [project.optional-dependencies]

@@ -163,7 +163,7 @@ _AUTHORIZE_TEMPLATE = """\
       <label for="api_key">API Key</label>
       <input type="password" id="api_key" name="api_key" placeholder="e.g., sk_live_..." required autofocus />
       <p class="help">
-        Get yours at <a href="https://dashboard.sarvam.ai/key-management" target="_blank">dashboard.sarvam.ai/key-management</a>
+        Get yours at <a href="https://dashboard.sarvam.ai/login" target="_blank">dashboard.sarvam.ai/login</a>
       </p>
       <div class="actions">
         <button type="submit">Authorize</button>

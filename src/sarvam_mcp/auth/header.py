@@ -58,13 +58,24 @@ def _is_exempt(path: str) -> bool:
 
 
 def _resolve_api_key(token: str) -> str | None:
-    """Resolve a token to an API key.
+    """Resolve a token to a usable credential for Sarvam API calls.
 
-    If it looks like a raw Sarvam API key (sk_ prefix), return as-is.
-    Otherwise try to look it up as an OAuth access token.
+    Priority:
+      1. Raw Sarvam API key (sk_ prefix) — use directly.
+      2. JWT token — verify and return as-is (used as Bearer for api.sarvam.ai).
+      3. Opaque OAuth token — look up in store (legacy fallback).
     """
     if token.startswith("sk_"):
         return token
+
+    from sarvam_mcp.auth.jwt import is_jwt_token, verify_dashboard_jwt
+
+    if is_jwt_token(token):
+        claims = verify_dashboard_jwt(token)
+        if claims:
+            return token
+        # JWT looks valid structurally but failed verification.
+        return None
 
     from sarvam_mcp.oauth.store import oauth_store
 
@@ -99,7 +110,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
                     "message": (
                         "Authentication required. Use OAuth or provide an API key "
                         "in the `api-subscription-key` header. "
-                        "Get one at https://dashboard.sarvam.ai/key-management"
+                        "Log in at https://dashboard.sarvam.ai/login"
                     ),
                 },
                 headers={

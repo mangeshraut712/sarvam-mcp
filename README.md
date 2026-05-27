@@ -48,7 +48,7 @@ With `uvx` (no prior install; downloads on first run), use:
 
 Use `sarvam-mcp` as the command when the package is installed with **pip**; use **`uvx sarvam-mcp`** when you want a one-shot run without a global install.
 
-**No API key required up front.** The server starts with auth deferred and **prompts you for the key on the first tool call** via MCP elicitation (Cursor / Claude Desktop will show a popup). The message links to [Key management](https://dashboard.sarvam.ai/key-management) — open it, copy an API key, and paste. The key gets saved under your user home (e.g. `~/.sarvam/credentials` on macOS/Linux, or the same path under your Windows user profile; mode `0600` on Unix) so subsequent runs don't ask.
+**No API key required up front.** The server starts with auth deferred and **prompts you for the key on the first tool call** via MCP elicitation (Cursor / Claude Desktop will show a popup). The message links to [dashboard.sarvam.ai/login](https://dashboard.sarvam.ai/login) — log in, copy an API key, and paste. The key gets saved under your user home (e.g. `~/.sarvam/credentials` on macOS/Linux, or the same path under your Windows user profile; mode `0600` on Unix) so subsequent runs don't ask.
 
 If your MCP client doesn't support elicitation, or you'd rather set the key ahead of time (easiest first):
 

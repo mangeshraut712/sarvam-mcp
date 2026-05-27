@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode
 
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -21,11 +21,19 @@ logger = logging.getLogger("sarvam_mcp.oauth")
 
 ISSUER = os.environ.get("SARVAM_MCP_ISSUER", "https://mcp.sarvam.ai")
 MCP_RESOURCE = os.environ.get("SARVAM_MCP_RESOURCE", "https://mcp.sarvam.ai/mcp")
+DASHBOARD_LOGIN_URL = os.environ.get(
+    "SARVAM_DASHBOARD_LOGIN_URL", "https://dashboard.sarvam.ai/login"
+)
+_DASHBOARD_AUTH_COOKIE = "dashboard_auth"
+_KRATOS_SESSION_COOKIE = "sarvam_identity_session"
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, api-subscription-key, mcp-protocol-version, mcp-session-id",
+    "Access-Control-Allow-Headers": (
+        "Content-Type, Authorization, api-subscription-key, "
+        "mcp-protocol-version, mcp-session-id"
+    ),
 }
 
 
@@ -112,20 +120,29 @@ async def oauth_authorize(request: Request) -> Response:
         code_challenge = params.get("code_challenge", "")
         code_challenge_method = params.get("code_challenge_method", "")
 
-        client = oauth_store.get_client(client_id)
-        client_name = client.client_name if client else "Unknown Client"
+        # Check if user already has a dashboard session (cookie or token param).
+        token = _extract_session_token(request)
 
-        html = render_authorize_page(
-            client_id=client_id,
-            client_name=client_name,
-            redirect_uri=redirect_uri,
-            state=state,
-            code_challenge=code_challenge,
-            code_challenge_method=code_challenge_method,
-        )
-        return HTMLResponse(html)
+        if token:
+            # User is authenticated — issue code and redirect back.
+            code = oauth_store.create_code(
+                client_id=client_id,
+                redirect_uri=redirect_uri,
+                api_key=token,
+                code_challenge=code_challenge or None,
+                code_challenge_method=code_challenge_method or None,
+            )
+            separator = "&" if "?" in redirect_uri else "?"
+            location = f"{redirect_uri}{separator}{urlencode({'code': code, 'state': state})}"
+            return RedirectResponse(location, status_code=302)
 
-    # POST — form submission
+        # No session — redirect to dashboard login with return_to back here.
+        authorize_url = str(request.url)
+        login_url = f"{DASHBOARD_LOGIN_URL}?{urlencode({'return_to': authorize_url})}"
+        logger.info("No session found, redirecting to dashboard login: %s", login_url)
+        return RedirectResponse(login_url, status_code=302)
+
+    # POST — legacy form submission (kept for backward compat)
     form = await request.form()
     client_id = str(form.get("client_id", ""))
     redirect_uri = str(form.get("redirect_uri", ""))
@@ -162,6 +179,26 @@ async def oauth_authorize(request: Request) -> Response:
     return RedirectResponse(location, status_code=302)
 
 
+def _extract_session_token(request: Request) -> str | None:
+    """Extract a session token from the request (cookie or query param).
+
+    Priority:
+      1. `token` query param (passed by dashboard after login redirect)
+      2. `dashboard_auth` cookie (JWT, shared on .sarvam.ai domain)
+      3. `sarvam_identity_session` cookie (Kratos session)
+    """
+    if token := request.query_params.get("token"):
+        return token.strip()
+
+    if cookie := request.cookies.get(_DASHBOARD_AUTH_COOKIE):
+        return cookie.strip()
+
+    if cookie := request.cookies.get(_KRATOS_SESSION_COOKIE):
+        return cookie.strip()
+
+    return None
+
+
 # ─── POST /oauth/token ────────────────────────────────────────────────────────
 
 async def oauth_token(request: Request) -> Response:
@@ -186,14 +223,17 @@ async def oauth_token(request: Request) -> Response:
     if code_verifier:
         code_verifier = str(code_verifier)
 
-    token = oauth_store.exchange_code(code, client_id, code_verifier)
-    if not token:
+    # Validate the auth code (PKCE, expiry, single-use).
+    result = oauth_store.exchange_code(code, client_id, code_verifier)
+    if not result:
         return _cors_json({"error": "invalid_grant"}, 400)
 
+    # Return the dashboard JWT directly as the access token (stateless).
+    # The JWT is self-contained — no server-side token store needed.
     return _cors_json({
-        "access_token": token.token,
+        "access_token": result.api_key,
         "token_type": "Bearer",
-        "expires_in": token.expires_in,
+        "expires_in": 86400,
         "scope": "mcp:tools",
     })
 

@@ -23,15 +23,15 @@ from sarvam_mcp.auth.context import _current, set_auth
 
 logger = logging.getLogger("sarvam_mcp.auth")
 
-# Direct link to create / copy API keys (use everywhere we send users to the dashboard).
-DASHBOARD_KEY_MANAGEMENT_URL = "https://dashboard.sarvam.ai/key-management"
+# Direct link to the dashboard login (use everywhere we send users to authenticate).
+DASHBOARD_LOGIN_URL = "https://dashboard.sarvam.ai/login"
 
 # User-facing path (tilde) for messages; use CREDENTIALS_PATH for actual I/O.
 _CREDENTIALS_TILDE = "~/.sarvam/credentials"
 CREDENTIALS_PATH = Path(_CREDENTIALS_TILDE).expanduser()
 SETUP_HELP = (
-    "Sarvam API key required. Create or copy one at:\n"
-    f"  {DASHBOARD_KEY_MANAGEMENT_URL}\n"
+    "Sarvam API key required. Log in to your account at:\n"
+    f"  {DASHBOARD_LOGIN_URL}\n"
     "Then set it up (easiest first):\n"
     "  1. In your MCP client config, set env: {\"SARVAM_API_KEY\": \"sk_...\"} "
     "(many IDEs have a form for this — no terminal needed)\n"
@@ -70,7 +70,7 @@ async def ensure_auth(ctx: Context) -> None:
         raise ToolError(
             "Missing API key. In hosted mode, include your Sarvam API key in the "
             "`api-subscription-key` request header or as `Authorization: Bearer <key>`. "
-            f"Get one at {DASHBOARD_KEY_MANAGEMENT_URL}"
+            f"Log in at {DASHBOARD_LOGIN_URL}"
         )
 
     # Elicit from the client. Falls back to a clear error if unsupported.
@@ -78,8 +78,8 @@ async def ensure_auth(ctx: Context) -> None:
         result = await ctx.elicit(
             message=(
                 "Sarvam needs an API key to make this call. "
-                f"Open {DASHBOARD_KEY_MANAGEMENT_URL} (click the link if your app "
-                "opens it), copy your API key, and paste it here. It will be "
+                f"Open {DASHBOARD_LOGIN_URL} to log in and get your key, "
+                "then paste it here. It will be "
                 f"saved to {_CREDENTIALS_TILDE} so you will not be asked again."
             ),
             response_type=str,
