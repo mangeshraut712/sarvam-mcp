@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import time
+import asyncio
 from pathlib import Path
 from typing import Any, Literal
 
+import httpx
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
@@ -14,8 +15,12 @@ from sarvam_mcp.tools._common import LanguageCode, ready_ctx
 
 STT_PATH = "/speech-to-text"
 STT_TRANSLATE_PATH = "/speech-to-text-translate"
-STT_BATCH_PATH = "/speech-to-text/job/init"
-STT_BATCH_STATUS_PATH = "/speech-to-text/job/status"
+STT_JOB_BASE = "/speech-to-text/job/v1"
+STT_JOB_UPLOAD = f"{STT_JOB_BASE}/upload-files"
+STT_JOB_DOWNLOAD = f"{STT_JOB_BASE}/download-files"
+
+MAX_POLL_ATTEMPTS = 90
+POLL_INTERVAL_SECONDS = 2
 
 SttModel = Literal["saaras:v3"]
 
@@ -169,39 +174,154 @@ def register(mcp: FastMCP) -> None:
         name="sarvam_tools_stt_batch_submit",
         description=(
             "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
-            "Initialize a batch (long-audio) transcription job. Returns a "
-            "`job_id` plus pre-signed Azure Blob URLs: upload your audio "
-            "file(s) to `input_storage_path`, then call "
-            "`sarvam_stt_batch_status` to poll completion. Outputs land at "
-            "`output_storage_path`. Use this for files >30s."
+            "Transcribe a long audio file (>30 s) using the batch job pipeline. "
+            "Runs the full flow automatically: create job → upload audio to Azure "
+            "Blob → start processing → poll until complete → return transcript.\n\n"
+            "Supports diarization, timestamps, and all Saaras v3 output modes."
         ),
     )
     async def sarvam_stt_batch_submit(
         ctx: Context,
-        language_code: LanguageCode = Field(default="unknown"),
+        audio_path: str = Field(
+            description=(
+                "Absolute path to the audio file. Supports wav, mp3, ogg, "
+                "flac, m4a, webm, aac, opus, amr, wma."
+            ),
+        ),
+        language_code: LanguageCode = Field(
+            default="unknown",
+            description="BCP-47 code, e.g. 'hi-IN'. Use 'unknown' to auto-detect.",
+        ),
+        mode: SttMode = Field(
+            default="transcribe",
+            description=(
+                "Output mode. 'transcribe' (default) | 'translate' (→ English) | "
+                "'verbatim' | 'translit' (→ Roman) | 'codemix'."
+            ),
+        ),
+        with_timestamps: bool = Field(
+            default=False, description="Include word-level timestamps."
+        ),
+        with_diarization: bool = Field(
+            default=False, description="Return per-speaker turns."
+        ),
+        num_speakers: int | None = Field(
+            default=None,
+            description="Hint for diarization: expected number of speakers.",
+        ),
         model: SttModel = Field(default="saaras:v3"),
-        with_timestamps: bool = Field(default=False),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
-        body: dict[str, Any] = {"model": model, "with_timestamps": with_timestamps}
-        if language_code != "unknown":
-            body["language_code"] = language_code
+        path = Path(audio_path).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(f"Audio file not found: {path}")
 
         with measure_tool() as metrics:
-            payload, call = await sc.client.post_json(STT_BATCH_PATH, json_body=body)
+            # Step 1: Create the job
+            await ctx.info("Creating batch STT job…")
+            job_params: dict[str, Any] = {
+                "language_code": language_code if language_code != "unknown" else None,
+                "model": model,
+                "mode": mode,
+                "with_timestamps": with_timestamps,
+                "with_diarization": with_diarization,
+            }
+            if num_speakers is not None:
+                job_params["num_speakers"] = num_speakers
+            job_params = {k: v for k, v in job_params.items() if v is not None}
+
+            create_resp, call = await sc.client.post_json(
+                STT_JOB_BASE, json_body={"job_parameters": job_params}
+            )
+            metrics.merge(call)
+            job_id = create_resp["job_id"]
+
+            # Step 2: Register files → get upload SAS URLs
+            await ctx.info(f"Registering audio file for job {job_id}…")
+            upload_resp, call = await sc.client.post_json(
+                STT_JOB_UPLOAD,
+                json_body={"job_id": job_id, "files": [path.name]},
+            )
             metrics.merge(call)
 
+            upload_urls = upload_resp.get("upload_urls", {})
+            if not upload_urls:
+                raise RuntimeError(f"No upload URLs returned for job {job_id}")
+
+            # Step 3: PUT audio bytes to Azure Blob
+            await ctx.info("Uploading audio to Azure Blob…")
+            file_details = next(iter(upload_urls.values()))
+            presigned_url = file_details["file_url"]
+            file_metadata = file_details.get("file_metadata") or {}
+
+            extra_headers = {str(k): str(v) for k, v in file_metadata.items()}
+            with path.open("rb") as fh:
+                blob_metrics = await sc.client.put_blob(
+                    presigned_url,
+                    fh.read(),
+                    content_type=_guess_audio_mime(path),
+                    extra_headers=extra_headers,
+                )
+            metrics.merge(blob_metrics)
+
+            # Step 4: Start the job
+            await ctx.info("Starting batch processing…")
+            start_resp, call = await sc.client.post_json(
+                f"{STT_JOB_BASE}/{job_id}/start",
+                json_body={"job_id": job_id, "job_parameters": job_params},
+            )
+            metrics.merge(call)
+
+            # Step 5: Poll for completion
+            await ctx.info("Polling for completion…")
+            terminal_states = {"Completed", "PartiallyCompleted", "Failed", "failed", "error"}
+            status_resp: dict[str, Any] = {}
+            for attempt in range(MAX_POLL_ATTEMPTS):
+                status_resp, call = await sc.client.get_json(
+                    f"{STT_JOB_BASE}/{job_id}/status"
+                )
+                metrics.merge(call)
+                job_state = status_resp.get("job_state", "")
+                if job_state in terminal_states:
+                    break
+                if (attempt + 1) % 5 == 0:
+                    await ctx.report_progress(attempt + 1, MAX_POLL_ATTEMPTS)
+                await asyncio.sleep(POLL_INTERVAL_SECONDS)
+            else:
+                return {
+                    "job_id": job_id,
+                    "job_state": status_resp.get("job_state", "timeout"),
+                    "error": (
+                        f"Job did not complete within "
+                        f"{MAX_POLL_ATTEMPTS * POLL_INTERVAL_SECONDS}s. "
+                        f"Poll manually with sarvam_tools_stt_batch_status."
+                    ),
+                    "observability": metrics.to_response_block(),
+                }
+
+            # Step 6: Extract transcript
+            result = status_resp.get("result") or {}
+            transcript = result.get("transcript") or status_resp.get("transcript")
+
+            if not transcript:
+                download_urls = status_resp.get("download_urls", {})
+                if download_urls:
+                    await ctx.info("Downloading transcript…")
+                    dl_url = next(iter(download_urls.values()))["file_url"]
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as dl:
+                        dl_resp = await dl.get(dl_url)
+                    if dl_resp.is_success:
+                        dl_body = dl_resp.json()
+                        transcript = dl_body.get("transcript", "")
+                        result = dl_body
+
         return {
-            "job_id": payload.get("job_id"),
-            "input_storage_path": payload.get("input_storage_path"),
-            "output_storage_path": payload.get("output_storage_path"),
-            "storage_container_type": payload.get("storage_container_type"),
-            "submitted_at": time.time(),
-            "next_steps": (
-                "1) Upload your audio file(s) to `input_storage_path` (Azure SAS-signed). "
-                "2) Poll with sarvam_stt_batch_status(job_id). "
-                "3) Read results from `output_storage_path` once status='completed'."
-            ),
+            "job_id": job_id,
+            "job_state": status_resp.get("job_state"),
+            "transcript": transcript or "",
+            "language_code": result.get("language_code"),
+            "diarized_transcript": result.get("diarized_transcript"),
+            "timestamps": result.get("timestamps"),
             "observability": metrics.to_response_block(),
         }
 
@@ -210,7 +330,7 @@ def register(mcp: FastMCP) -> None:
         description=(
             "Runtime tool — calls Sarvam API now.\n\n"
             "Poll the status of a batch transcription job. Returns the transcript "
-            "once `status == 'completed'`."
+            "once `job_state == 'Completed'`."
         ),
     )
     async def sarvam_stt_batch_status(
@@ -220,14 +340,16 @@ def register(mcp: FastMCP) -> None:
         sc = await ready_ctx(ctx)
         with measure_tool() as metrics:
             payload, call = await sc.client.get_json(
-                STT_BATCH_STATUS_PATH, params={"job_id": job_id}
+                f"{STT_JOB_BASE}/{job_id}/status"
             )
             metrics.merge(call)
 
+        result = payload.get("result") or {}
         return {
             "job_id": job_id,
-            "status": payload.get("job_state") or payload.get("status"),
-            "transcript": payload.get("transcript"),
+            "job_state": payload.get("job_state"),
+            "transcript": result.get("transcript") or payload.get("transcript"),
+            "download_urls": payload.get("download_urls"),
             "raw": payload,
             "observability": metrics.to_response_block(),
         }

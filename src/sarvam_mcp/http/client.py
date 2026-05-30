@@ -88,6 +88,54 @@ class SarvamClient:
             "GET", path, params=dict(params) if params else None, scope=scope
         )
 
+    async def delete_json(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        scope: str | None = None,
+    ) -> tuple[Any, CallMetrics]:
+        return await self._do_request(
+            "DELETE", path, params=dict(params) if params else None, scope=scope
+        )
+
+    async def put_blob(
+        self,
+        url: str,
+        content: bytes,
+        *,
+        content_type: str = "application/octet-stream",
+        extra_headers: dict[str, str] | None = None,
+        timeout: float = 300.0,
+    ) -> CallMetrics:
+        """PUT raw bytes to a presigned Azure Blob SAS URL.
+
+        No Sarvam auth is injected — the SAS token is embedded in the URL.
+        """
+        headers: dict[str, str] = {
+            "x-ms-blob-type": "BlockBlob",
+            "Content-Type": content_type,
+        }
+        if extra_headers:
+            headers.update(extra_headers)
+
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout)
+        ) as blob_client:
+            response = await blob_client.put(url, content=content, headers=headers)
+
+        metrics = CallMetrics()
+        metrics.status_code = response.status_code
+        if not response.is_success:
+            raise SarvamAPIError(
+                f"Blob upload failed ({response.status_code}): "
+                f"{response.text[:500]}",
+                status_code=response.status_code,
+                request_id=None,
+                body=response.text,
+            )
+        return metrics
+
     @asynccontextmanager
     async def stream_ws(
         self,

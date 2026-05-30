@@ -19,7 +19,6 @@ import asyncio
 from pathlib import Path
 from typing import Any, Literal
 
-import httpx
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
@@ -106,24 +105,15 @@ def register(mcp: FastMCP) -> None:
             presigned_url = file_details["file_url"]
             file_metadata = file_details.get("file_metadata") or {}
 
-            mime = _guess_doc_mime(path)
-            headers: dict[str, str] = {}
-            for k, v in file_metadata.items():
-                headers[k] = str(v)
-            headers["Content-Type"] = mime
-
-            async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as upload_client:
-                with path.open("rb") as fh:
-                    upload_response = await upload_client.put(
-                        presigned_url,
-                        content=fh.read(),
-                        headers=headers,
-                    )
-                if not upload_response.is_success:
-                    raise RuntimeError(
-                        f"File upload failed ({upload_response.status_code}): "
-                        f"{upload_response.text[:500]}"
-                    )
+            extra_headers = {str(k): str(v) for k, v in file_metadata.items()}
+            with path.open("rb") as fh:
+                blob_metrics = await sc.client.put_blob(
+                    presigned_url,
+                    fh.read(),
+                    content_type=_guess_doc_mime(path),
+                    extra_headers=extra_headers,
+                )
+            metrics.merge(blob_metrics)
 
             # Step 4: Start the job
             await ctx.info("Starting processing…")

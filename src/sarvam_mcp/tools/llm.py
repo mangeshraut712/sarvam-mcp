@@ -65,11 +65,20 @@ def register(mcp: FastMCP) -> None:
 
         choice = (payload.get("choices") or [{}])[0]
         message = choice.get("message") or {}
-        return {
-            "content": message.get("content", ""),
+        finish_reason = choice.get("finish_reason")
+        content = message.get("content") or ""
+
+        result: dict[str, Any] = {
+            "content": content,
             "role": message.get("role", "assistant"),
-            "finish_reason": choice.get("finish_reason"),
+            "finish_reason": finish_reason,
             "usage": payload.get("usage"),
             "model": payload.get("model"),
             "observability": metrics.to_response_block(),
         }
+        if finish_reason == "length":
+            result["truncation_warning"] = (
+                "Output was truncated because max_tokens was reached. "
+                "Increase max_tokens or omit it for the full response."
+            )
+        return result

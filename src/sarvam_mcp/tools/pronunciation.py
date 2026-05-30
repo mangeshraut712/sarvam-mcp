@@ -7,6 +7,7 @@ pronounced in TTS output. All endpoints live under
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastmcp import Context, FastMCP
@@ -83,9 +84,11 @@ def register(mcp: FastMCP) -> None:
         ),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
+        dict_bytes = json.dumps(entries, ensure_ascii=False).encode("utf-8")
         with measure_tool() as metrics:
-            payload, call = await sc.client.post_json(
-                PRONDICT_BASE, json_body={"entries": entries}
+            payload, call = await sc.client.post_multipart(
+                PRONDICT_BASE,
+                files={"file": ("dictionary.json", dict_bytes, "application/json")},
             )
             metrics.merge(call)
         return {
@@ -106,8 +109,8 @@ def register(mcp: FastMCP) -> None:
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
         with measure_tool() as metrics:
-            payload, call = await sc.client.post_json(
-                f"{PRONDICT_BASE}/{dictionary_id}/delete", json_body={}
+            payload, call = await sc.client.delete_json(
+                PRONDICT_BASE, params={"dict_id": dictionary_id}
             )
             metrics.merge(call)
         return {
