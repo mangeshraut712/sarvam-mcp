@@ -1,8 +1,7 @@
-"""HTTP header-based auth: extract API key from incoming request headers.
+"""HTTP header-based auth: extract Bearer token from incoming request headers.
 
-Used in hosted/HTTP mode where each request carries the client's own
-Sarvam API key in the ``api-subscription-key`` or ``Authorization`` header.
-Also supports OAuth Bearer tokens issued by the built-in OAuth server.
+Used in hosted/HTTP mode where each request carries the client's OAuth
+JWT in the ``Authorization: Bearer`` header.
 """
 
 from __future__ import annotations
@@ -19,29 +18,17 @@ from sarvam_mcp.auth.context import set_auth
 
 logger = logging.getLogger("sarvam_mcp.auth.header")
 
-_HEADER_NAME = "api-subscription-key"
-_AUTH_HEADER = "authorization"
-
 _ISSUER = os.environ.get("SARVAM_MCP_ISSUER", "https://mcp.sarvam.ai")
 _RESOURCE_METADATA_URL = f"{_ISSUER}/.well-known/oauth-protected-resource"
 
 
-def _extract_api_key(request: Request) -> str | None:
-    """Extract API key from request headers.
-
-    Priority:
-      1. api-subscription-key header (Sarvam convention)
-      2. Authorization: Bearer <key> — could be a raw API key or an OAuth token
-    """
-    if key := request.headers.get(_HEADER_NAME):
-        return key.strip()
-
-    auth = request.headers.get(_AUTH_HEADER, "")
+def _extract_token(request: Request) -> str | None:
+    """Extract Bearer token from the Authorization header."""
+    auth = request.headers.get("authorization", "")
     if auth.lower().startswith("bearer "):
         token = auth[7:].strip()
         if token:
             return token
-
     return None
 
 
@@ -59,24 +46,19 @@ def _is_exempt(path: str) -> bool:
     return False
 
 
-def _resolve_api_key(token: str) -> str | None:
-    """Resolve a token to a usable credential for Sarvam API calls.
+def _resolve_token(token: str) -> str | None:
+    """Verify a token and return it if valid.
 
-    Priority:
-      1. Raw Sarvam API key (sk_ prefix) — use directly.
-      2. JWT token — verify and return as-is (used as Bearer for api.sarvam.ai).
-      3. Opaque OAuth token — look up in store (legacy fallback).
+    Accepts JWT tokens verified against the dashboard public key,
+    or passes them through for Bearer auth to api.sarvam.ai (which
+    does its own validation).
     """
-    if token.startswith("sk_"):
-        return token
-
     from sarvam_mcp.auth.jwt import is_jwt_token, verify_dashboard_jwt
 
     if is_jwt_token(token):
         claims = verify_dashboard_jwt(token)
         if claims:
             return token
-        # JWT looks valid structurally but failed verification.
         return None
 
     from sarvam_mcp.oauth.store import oauth_store
@@ -85,13 +67,13 @@ def _resolve_api_key(token: str) -> str | None:
 
 
 class APIKeyAuthMiddleware(BaseHTTPMiddleware):
-    """Starlette middleware that sets per-request auth from HTTP headers.
+    """Starlette middleware that sets per-request auth from the Authorization header.
 
-    Rejects requests without a valid API key with a 401 response, except
-    for health-check, well-known, and OAuth endpoints.
+    Rejects requests without a valid Bearer token with a 401 response,
+    except for health-check, well-known, and OAuth endpoints.
 
-    On 401, returns a WWW-Authenticate header with resource_metadata URL
-    so MCP clients can discover the OAuth authorization server.
+    On 401, returns a ``WWW-Authenticate`` header with ``resource_metadata``
+    URL so MCP clients can discover the OAuth authorization server.
     """
 
     async def dispatch(
@@ -103,25 +85,27 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        raw_token = _extract_api_key(request)
+        raw_token = _extract_token(request)
         if not raw_token:
             return JSONResponse(
                 status_code=401,
                 content={
-                    "error": "missing_api_key",
+                    "error": "missing_token",
                     "message": (
-                        "Authentication required. Use OAuth or provide an API key "
-                        "in the `api-subscription-key` header. "
+                        "Authentication required. Use OAuth to connect, or "
+                        "include a Bearer token in the Authorization header. "
                         "Log in at https://dashboard.sarvam.ai/login"
                     ),
                 },
                 headers={
-                    "WWW-Authenticate": f'Bearer resource_metadata="{_RESOURCE_METADATA_URL}"',
+                    "WWW-Authenticate": (
+                        f'Bearer resource_metadata="{_RESOURCE_METADATA_URL}"'
+                    ),
                 },
             )
 
-        api_key = _resolve_api_key(raw_token)
-        if not api_key:
+        verified = _resolve_token(raw_token)
+        if not verified:
             return JSONResponse(
                 status_code=401,
                 content={
@@ -137,5 +121,5 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        set_auth(StaticKeyProvider(api_key))
+        set_auth(StaticKeyProvider(verified))
         return await call_next(request)

@@ -9,6 +9,9 @@ from __future__ import annotations
 import pytest
 
 EXPECTED_TOOLS = {
+    # Auth
+    "sarvam_tools_auth_login",
+    "sarvam_tools_auth_status",
     # Atomic — one tool per Sarvam endpoint
     "sarvam_tools_stt_transcribe",
     "sarvam_tools_stt_translate",
@@ -30,12 +33,7 @@ EXPECTED_TOOLS = {
 }
 
 
-@pytest.fixture
-def _api_key(monkeypatch):
-    monkeypatch.setenv("SARVAM_API_KEY", "sk_test_smoke")
-
-
-async def test_all_expected_tools_register(_api_key):
+async def test_all_expected_tools_register():
     from sarvam_mcp.server import build_server
 
     server = build_server()
@@ -49,5 +47,3 @@ async def test_all_expected_tools_register(_api_key):
 
     missing = EXPECTED_TOOLS - names
     assert not missing, f"Tools failed to register: {missing}"
-
-

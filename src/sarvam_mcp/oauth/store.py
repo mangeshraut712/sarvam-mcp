@@ -27,8 +27,6 @@ def _get_code_secret() -> bytes:
         return secret.encode()
     if key_b64 := os.environ.get("DASHBOARD_JWT_PRIVATE_KEY_BASE64"):
         return hashlib.sha256(key_b64.encode()).digest()
-    # Per-process fallback (won't survive restarts or work cross-pod
-    # without one of the above env vars).
     return hashlib.sha256(b"sarvam-mcp-default-" + str(os.getpid()).encode()).digest()
 
 
@@ -48,7 +46,7 @@ class AuthCode:
     code: str
     client_id: str
     redirect_uri: str
-    api_key: str
+    credential: str
     code_challenge: str | None = None
     code_challenge_method: str | None = None
     created_at: float = field(default_factory=time.time)
@@ -58,7 +56,7 @@ class AuthCode:
 @dataclass
 class AccessToken:
     token: str
-    api_key: str
+    credential: str
     client_id: str
     created_at: float = field(default_factory=time.time)
     expires_in: int = 3600 * 24 * 30  # 30 days
@@ -119,14 +117,14 @@ class OAuthStore:
         self,
         client_id: str,
         redirect_uri: str,
-        api_key: str,
+        credential: str,
         code_challenge: str | None = None,
         code_challenge_method: str | None = None,
     ) -> str:
         payload = {
             "cid": client_id,
             "ruri": redirect_uri,
-            "key": api_key,
+            "key": credential,
             "iat": int(time.time()),
         }
         if code_challenge:
@@ -142,7 +140,6 @@ class OAuthStore:
             return None
         if payload.get("cid") != client_id:
             return None
-        # Verify PKCE
         if cc := payload.get("cc"):
             if not code_verifier:
                 return None
@@ -153,19 +150,19 @@ class OAuthStore:
 
         return AccessToken(
             token=payload["key"],
-            api_key=payload["key"],
+            credential=payload["key"],
             client_id=client_id,
         )
 
     def lookup_token(self, token: str) -> str | None:
-        """Return the API key associated with a token, or None."""
+        """Return the credential associated with a token, or None."""
         access_token = self._tokens.get(token)
         if not access_token:
             return None
         if time.time() - access_token.created_at > access_token.expires_in:
             del self._tokens[token]
             return None
-        return access_token.api_key
+        return access_token.credential
 
     def cleanup_expired(self) -> None:
         """Remove expired tokens."""

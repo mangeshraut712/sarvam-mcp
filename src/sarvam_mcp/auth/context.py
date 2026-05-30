@@ -1,6 +1,7 @@
 """ContextVar carrying the active auth provider for the current request.
 
-Set once at server startup (or lazily via elicitation on first tool call).
+Set once at server startup (from stored credentials) or lazily via the
+``sarvam_tools_auth_login`` tool / OAuth flow.
 """
 
 from __future__ import annotations
@@ -24,8 +25,8 @@ def current_auth() -> StaticKeyProvider:
     provider = _current.get()
     if provider is None:
         raise RuntimeError(
-            "No auth provider configured. Set SARVAM_API_KEY, run `sarvam-mcp init`, "
-            "or add ~/.sarvam/credentials before starting the MCP server. "
-            "Log in at https://dashboard.sarvam.ai/login"
+            "Not authenticated. Run the `sarvam_tools_auth_login` tool or "
+            "`sarvam-mcp login` to log in via OAuth. "
+            "Visit https://dashboard.sarvam.ai/login for account access."
         )
     return provider

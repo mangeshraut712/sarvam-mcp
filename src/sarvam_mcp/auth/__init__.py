@@ -1,4 +1,4 @@
-"""Auth: API-key provider + elicit-on-demand flow + HTTP header auth + JWT."""
+"""Auth: OAuth JWT provider + HTTP header auth + JWT verification."""
 
 from sarvam_mcp.auth.api_key import StaticKeyProvider
 from sarvam_mcp.auth.context import current_auth, set_auth

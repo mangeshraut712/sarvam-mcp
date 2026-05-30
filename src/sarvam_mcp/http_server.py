@@ -1,7 +1,7 @@
 """Hosted HTTP entry point for sarvam-mcp.
 
 Runs the MCP server over Streamable HTTP transport (FastMCP's built-in ASGI app)
-with per-request API key authentication via HTTP headers.
+with per-request OAuth Bearer token authentication via HTTP headers.
 
 Usage:
     sarvam-mcp-http                     # starts on 0.0.0.0:8000
@@ -150,7 +150,6 @@ _middleware = [
         allow_headers=[
             "mcp-protocol-version",
             "mcp-session-id",
-            "api-subscription-key",
             "Authorization",
             "Content-Type",
         ],
@@ -174,7 +173,7 @@ _mcp.custom_route("/.well-known/oauth-authorization-server", methods=["GET", "OP
     well_known_authorization_server
 )
 _mcp.custom_route("/oauth/register", methods=["POST", "OPTIONS"])(oauth_register)
-_mcp.custom_route("/oauth/authorize", methods=["GET", "POST", "OPTIONS"])(oauth_authorize)
+_mcp.custom_route("/oauth/authorize", methods=["GET", "OPTIONS"])(oauth_authorize)
 _mcp.custom_route("/oauth/token", methods=["POST", "OPTIONS"])(oauth_token)
 
 app = _mcp.http_app(path="/mcp", middleware=_middleware, stateless_http=True)

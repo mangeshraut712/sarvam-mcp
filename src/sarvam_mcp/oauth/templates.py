@@ -1,4 +1,8 @@
-"""HTML templates for the OAuth authorize page."""
+"""HTML templates for the OAuth authorize page.
+
+The primary flow redirects to Kratos login automatically; this template
+is kept only as a minimal fallback showing a redirect message.
+"""
 
 
 def render_authorize_page(
@@ -11,7 +15,7 @@ def render_authorize_page(
     code_challenge_method: str,
     error_html: str = "",
 ) -> str:
-    """Render the authorize page with safe substitution (avoids CSS brace issues)."""
+    """Render a minimal authorize page (redirect fallback)."""
     return _AUTHORIZE_TEMPLATE.replace(
         "{{error_html}}", error_html
     ).replace(
@@ -56,6 +60,7 @@ _AUTHORIZE_TEMPLATE = """\
       max-width: 420px;
       width: 100%;
       box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      text-align: center;
     }
     h1 {
       font-size: 1.25rem;
@@ -69,61 +74,10 @@ _AUTHORIZE_TEMPLATE = """\
       line-height: 1.45;
       margin-bottom: 1.5rem;
     }
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-bottom: 0.4rem;
-      color: #444;
-    }
-    input[type="password"] {
-      width: 100%;
-      padding: 0.65rem 1rem;
-      background: #fff;
-      border: 1px solid #d4d4d4;
-      border-radius: 9999px;
-      color: #1a1a1a;
-      font-size: 0.9rem;
-      font-family: monospace;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input[type="password"]:hover {
-      border-color: #999;
-    }
-    input[type="password"]:focus {
-      border-color: #1a1a1a;
-    }
-    .help {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 0.5rem;
-    }
-    .help a { color: #1a1a1a; text-decoration: underline; }
-    .help a:hover { color: #000; }
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 1.5rem;
-      gap: 0.75rem;
-    }
-    button {
-      padding: 0.6rem 1.25rem;
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-      border-radius: 9999px;
-      font-size: 0.875rem;
-      font-weight: 400;
-      cursor: pointer;
-      transition: background 0.15s;
-      line-height: 1;
-    }
-    button:hover { background: #333; }
-    button:active { transform: scale(0.95); }
     .brand {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
     }
@@ -138,6 +92,16 @@ _AUTHORIZE_TEMPLATE = """\
       font-size: 0.85rem;
       margin-bottom: 1rem;
     }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e5e5e5;
+      border-top-color: #1a1a1a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -150,25 +114,12 @@ _AUTHORIZE_TEMPLATE = """\
       <span>Sarvam MCP</span>
     </div>
     {{error_html}}
-    <h1>Connect to Sarvam APIs</h1>
+    <h1>Connecting to Sarvam</h1>
     <p class="subtitle">
-      <strong>{{client_name}}</strong> needs your API key to make calls on your behalf.
+      <strong>{{client_name}}</strong> is requesting access.
+      Redirecting you to log in...
     </p>
-    <form method="POST">
-      <input type="hidden" name="client_id" value="{{client_id}}" />
-      <input type="hidden" name="redirect_uri" value="{{redirect_uri}}" />
-      <input type="hidden" name="state" value="{{state}}" />
-      <input type="hidden" name="code_challenge" value="{{code_challenge}}" />
-      <input type="hidden" name="code_challenge_method" value="{{code_challenge_method}}" />
-      <label for="api_key">API Key</label>
-      <input type="password" id="api_key" name="api_key" placeholder="e.g., sk_live_..." required autofocus />
-      <p class="help">
-        Get yours at <a href="https://dashboard.sarvam.ai/login" target="_blank">dashboard.sarvam.ai/login</a>
-      </p>
-      <div class="actions">
-        <button type="submit">Authorize</button>
-      </div>
-    </form>
+    <div class="spinner"></div>
   </div>
 </body>
 </html>

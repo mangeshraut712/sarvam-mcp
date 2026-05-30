@@ -1,6 +1,6 @@
-"""Self-contained OAuth 2.1 authorization server for MCP clients.
+"""OAuth 2.1 authorization server endpoints.
 
-Implements RFC 9728 (OAuth Protected Resource Metadata) and dynamic client
+Implements RFC 9728 (protected resource metadata) and dynamic client
 registration so MCP clients (Cursor, Claude Desktop) can discover auth
-requirements and prompt the user for their Sarvam API key via browser.
+requirements and prompt the user to log in via browser.
 """

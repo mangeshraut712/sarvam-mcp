@@ -7,9 +7,10 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 from pydantic import Field
 
+from sarvam_mcp.auth.elicit import ensure_auth
 from sarvam_mcp.code import _data
 from sarvam_mcp.code._snippets import SNIPPETS
 
@@ -29,13 +30,15 @@ def register(mcp: FastMCP) -> None:
             "versions; they assume `SARVAM_API_KEY` is set in the env."
         ),
     )
-    def sarvam_code_snippet(
+    async def sarvam_code_snippet(
+        ctx: Context,
         api: SnippetApi = Field(description="Which Sarvam API."),
         language: SnippetLanguage = Field(
             default="python",
             description="Programming language for the snippet.",
         ),
     ) -> dict[str, Any]:
+        await ensure_auth(ctx)
         snippet = SNIPPETS.get((api, language))
         if not snippet:
             return {
@@ -66,11 +69,13 @@ def register(mcp: FastMCP) -> None:
             "fast and works without an API key."
         ),
     )
-    def sarvam_code_recommend_model(
+    async def sarvam_code_recommend_model(
+        ctx: Context,
         task_description: str = Field(
             description="What the dev wants to build, e.g. 'transcribe Hindi voicemails'.",
         ),
     ) -> dict[str, Any]:
+        await ensure_auth(ctx)
         return _recommend(task_description)
 
     @mcp.tool(
@@ -84,7 +89,8 @@ def register(mcp: FastMCP) -> None:
             "issues with fix suggestions."
         ),
     )
-    def sarvam_code_validate_request(
+    async def sarvam_code_validate_request(
+        ctx: Context,
         endpoint: Literal[
             "/text-to-speech",
             "/speech-to-text",
@@ -99,6 +105,7 @@ def register(mcp: FastMCP) -> None:
             description="The draft request body the agent is about to send.",
         ),
     ) -> dict[str, Any]:
+        await ensure_auth(ctx)
         issues = _validate(endpoint, body)
         return {
             "endpoint": endpoint,

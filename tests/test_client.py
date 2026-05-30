@@ -31,7 +31,7 @@ async def test_auth_header_is_attached(client, httpx_mock):
     payload, metrics = await client.post_json("/translate", json_body={"input": "hi"})
 
     request = httpx_mock.get_request()
-    assert request.headers["api-subscription-key"] == "sk_test_unit_test_key_abcd"
+    assert request.headers["authorization"] == "Bearer test_jwt_token_for_unit_tests_abcd"
     assert payload == {"translated_text": "ok"}
     assert metrics.request_id == "req_123"
     assert metrics.status_code == 200
@@ -42,7 +42,7 @@ async def test_401_maps_to_auth_error(client, httpx_mock):
         method="POST",
         url="https://api.sarvam.ai/translate",
         status_code=401,
-        json={"error": "invalid api key"},
+        json={"error": "invalid token"},
     )
     with pytest.raises(SarvamAuthError) as exc_info:
         await client.post_json("/translate", json_body={"input": "x"})

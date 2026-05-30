@@ -22,16 +22,20 @@ logger = logging.getLogger("sarvam_mcp")
 async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
     """Build shared deps once at server start; tear down at shutdown.
 
-    The server does **not** fail when ``SARVAM_API_KEY`` is missing — it starts
-    cleanly and the first tool call will elicit the key from the user via MCP
-    elicitation (see ``auth/elicit.py``).
+    The server starts cleanly even without a stored token — the first tool
+    call will direct the user to ``sarvam_tools_auth_login``.
     """
     config = Config.load()
-    if config.api_key:
-        set_auth(StaticKeyProvider(config.api_key))
-        auth_status = "configured"
+
+    # Check for a stored OAuth token from a previous login.
+    from sarvam_mcp.tools.auth import try_stored_token
+
+    stored = try_stored_token()
+    if stored:
+        set_auth(StaticKeyProvider(stored))
+        auth_status = "configured (stored token)"
     else:
-        auth_status = "deferred (will elicit on first tool call)"
+        auth_status = "deferred (will prompt on first tool call)"
 
     client = SarvamClient(config.base_url, region=config.region)
     sink = build_sink(config.output_mode, config.base_path)
@@ -54,6 +58,11 @@ def build_server() -> FastMCP:
     """Construct the FastMCP server with all tools registered."""
     mcp = FastMCP("sarvam-mcp", lifespan=_lifespan)
 
+    # Auth tools — login + status
+    from sarvam_mcp.tools import auth
+
+    auth.register(mcp)
+
     # Atomic tools — registered eagerly. Each module exposes ``register(mcp)``.
     from sarvam_mcp.tools import (
         language,
@@ -75,7 +84,6 @@ def build_server() -> FastMCP:
     vision.register(mcp)
     pronunciation.register(mcp)
 
-
     from sarvam_mcp import code, workflows
 
     code.register(mcp)
@@ -92,11 +100,11 @@ def main() -> None:
 
     Subcommands:
         (no args)  — run the MCP server over stdio (the default).
-        init       — interactive setup: paste your API key in the terminal,
-                     it lands in ~/.sarvam/credentials with mode 0600.
+        login      — interactive OAuth login: opens your browser, catches
+                     the callback, and saves the token to ~/.sarvam/credentials.
     """
-    if len(sys.argv) > 1 and sys.argv[1] == "init":
-        _run_init()
+    if len(sys.argv) > 1 and sys.argv[1] == "login":
+        _run_login()
         return
 
     logging.basicConfig(
@@ -108,45 +116,44 @@ def main() -> None:
     server.run()
 
 
-def _run_init() -> None:
-    """Interactive ``sarvam-mcp init`` — write the credentials file from a TTY.
+def _run_login() -> None:
+    """Interactive ``sarvam-mcp login`` — OAuth flow from the terminal."""
+    import asyncio
 
-    Lives here (instead of a separate `cli/` module) because it's a single
-    function and pulling in a CLI framework just for this would be overkill.
-    """
-    import getpass
-    import os
-    from pathlib import Path
+    from sarvam_mcp.tools.auth import persist_token, try_stored_token
 
-    creds_path = Path("~/.sarvam/credentials").expanduser()
-    print("\nSarvam MCP — first-time setup")
+    print("\nSarvam MCP — OAuth login")
     print("─" * 40)
-    print("Get your API key at: https://dashboard.sarvam.ai/login\n")
-    if creds_path.exists():
-        print(f"⚠  {creds_path} already exists. Overwrite? [y/N] ", end="", flush=True)
+
+    existing = try_stored_token()
+    if existing:
+        print("You already have a stored token.")
+        print("Re-authenticate? [y/N] ", end="", flush=True)
         if input().strip().lower() not in ("y", "yes"):
             print("Aborted.")
             return
 
-    api_key = getpass.getpass("Paste your Sarvam API key (input hidden): ").strip()
-    if not api_key:
-        print("No key entered — aborting.")
+    print("Opening browser for Sarvam login...\n")
+
+    async def _do_login() -> str:
+        from unittest.mock import AsyncMock
+
+        from sarvam_mcp.tools.auth import _run_oauth_flow
+
+        mock_ctx = AsyncMock()
+        mock_ctx.info = AsyncMock(side_effect=lambda msg: print(f"  {msg}"))
+        return await _run_oauth_flow(mock_ctx)
+
+    try:
+        token = asyncio.run(_do_login())
+    except Exception as exc:
+        print(f"\nLogin failed: {exc}")
         sys.exit(1)
 
-    region = input("Region [in]: ").strip() or "in"
-
-    creds_path.parent.mkdir(parents=True, exist_ok=True)
-    body = (
-        "# Sarvam credentials — written by `sarvam-mcp init`\n"
-        f"api_key = {api_key}\n"
-        f"region = {region}\n"
-    )
-    creds_path.write_text(body)
-    os.chmod(creds_path, 0o600)
-    print(f"\n✓ Credentials saved to {creds_path}")
+    persist_token(token)
+    print(f"\n✓ Token saved to ~/.sarvam/credentials")
     print("  Permissions: 0600 (owner-only)")
-    print(f"  Region:      {region}")
-    print("\nYou can now point Cursor / Claude Desktop at sarvam-mcp without setting env vars.")
+    print("\nYou can now use sarvam-mcp without additional setup.")
 
 
 if __name__ == "__main__":
