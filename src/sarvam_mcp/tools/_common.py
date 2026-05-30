@@ -6,11 +6,84 @@ so tool modules can stay short and focused on their endpoint shape.
 
 from __future__ import annotations
 
+import base64
+import tempfile
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Literal
 
+import httpx
 from fastmcp import Context
 
 from sarvam_mcp._registry import ServerContext
+
+MAX_FILE_BYTES = 25 * 1024 * 1024  # 25 MB
+
+
+@asynccontextmanager
+async def resolve_file_input(
+    *,
+    file_path: str | None = None,
+    file_base64: str | None = None,
+    file_url: str | None = None,
+    filename: str | None = None,
+    max_bytes: int = MAX_FILE_BYTES,
+) -> AsyncIterator[Path]:
+    """Resolve a file from a local path, base64 data, or URL into a ``Path``.
+
+    Exactly one of ``file_path``, ``file_base64``, or ``file_url`` must be set.
+    For base64/URL inputs a temporary file is created and cleaned up on exit.
+    ``filename`` preserves the extension for MIME detection (required when not
+    using ``file_path``).
+    """
+    provided = sum(x is not None for x in (file_path, file_base64, file_url))
+    if provided != 1:
+        raise ValueError(
+            "Provide exactly one of: file path, base64 data, or URL. "
+            f"Got {provided}."
+        )
+
+    if file_path is not None:
+        path = Path(file_path).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(f"File not found: {path}")
+        yield path
+        return
+
+    suffix = ""
+    if filename:
+        suffix = Path(filename).suffix or ""
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    tmp_path = Path(tmp.name)
+    try:
+        if file_base64 is not None:
+            data = base64.b64decode(file_base64)
+            if len(data) > max_bytes:
+                raise ValueError(
+                    f"Decoded file is {len(data)} bytes, exceeds {max_bytes} byte limit."
+                )
+            tmp.write(data)
+            tmp.close()
+            yield tmp_path
+        else:
+            assert file_url is not None
+            async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+                async with client.stream("GET", file_url) as resp:
+                    resp.raise_for_status()
+                    downloaded = 0
+                    async for chunk in resp.aiter_bytes(chunk_size=65536):
+                        downloaded += len(chunk)
+                        if downloaded > max_bytes:
+                            raise ValueError(
+                                f"Downloaded file exceeds {max_bytes} byte limit."
+                            )
+                        tmp.write(chunk)
+            tmp.close()
+            yield tmp_path
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 # ---- Language codes -------------------------------------------------------
 #

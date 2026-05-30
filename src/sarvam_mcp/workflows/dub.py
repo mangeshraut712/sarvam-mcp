@@ -7,7 +7,6 @@ ElevenLabs has Dubbing as a separate paid product; here it's one MCP call.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from fastmcp import Context, FastMCP
@@ -19,6 +18,7 @@ from sarvam_mcp.tools._common import (
     LanguageCode,
     TtsLanguageCode,
     ready_ctx,
+    resolve_file_input,
 )
 from sarvam_mcp.workflows._helpers import (
     stt_transcribe,
@@ -40,10 +40,13 @@ def register(mcp: FastMCP) -> None:
     )
     async def sv_dub(
         ctx: Context,
-        audio_path: str = Field(description="Absolute path to the source audio file."),
         target_language_code: TtsLanguageCode = Field(
             description="Output language for the dubbed audio.",
         ),
+        audio_path: str | None = Field(default=None, description="Local path to the source audio file."),
+        audio_base64: str | None = Field(default=None, description="Base64-encoded audio data."),
+        audio_url: str | None = Field(default=None, description="URL to fetch the audio file from."),
+        filename: str | None = Field(default=None, description="Filename with extension (for base64/URL)."),
         source_language_code: LanguageCode = Field(
             default="unknown",
             description="STT language hint. 'unknown' enables auto-detect.",
@@ -56,46 +59,46 @@ def register(mcp: FastMCP) -> None:
         translate_mode: str = Field(default="formal"),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
-        path = Path(audio_path).expanduser()
-        if not path.is_file():
-            raise FileNotFoundError(f"Audio file not found: {path}")
+        async with resolve_file_input(
+            file_path=audio_path, file_base64=audio_base64,
+            file_url=audio_url, filename=filename,
+        ) as path:
+            with measure_tool() as metrics:
+                await ctx.info("Transcribing source audio…")
+                transcript, detected_lang = await stt_transcribe(
+                    sc, path, language_code=source_language_code, metrics=metrics
+                )
+                if not transcript.strip():
+                    raise RuntimeError("STT returned an empty transcript — nothing to dub.")
 
-        with measure_tool() as metrics:
-            await ctx.info("Transcribing source audio…")
-            transcript, detected_lang = await stt_transcribe(
-                sc, path, language_code=source_language_code, metrics=metrics
-            )
-            if not transcript.strip():
-                raise RuntimeError("STT returned an empty transcript — nothing to dub.")
+                source_lang = detected_lang or (
+                    source_language_code if source_language_code != "unknown" else "hi-IN"
+                )
 
-            source_lang = detected_lang or (
-                source_language_code if source_language_code != "unknown" else "hi-IN"
-            )
+                await ctx.info(
+                    f"Translating from {source_lang} to {target_language_code}…"
+                )
+                translated = await translate_text(
+                    sc,
+                    transcript,
+                    source_language_code=source_lang,
+                    target_language_code=target_language_code,
+                    model=translate_model,
+                    mode=translate_mode,
+                    metrics=metrics,
+                )
+                if not translated.strip():
+                    raise RuntimeError("Translate returned empty text.")
 
-            await ctx.info(
-                f"Translating from {source_lang} to {target_language_code}…"
-            )
-            translated = await translate_text(
-                sc,
-                transcript,
-                source_language_code=source_lang,
-                target_language_code=target_language_code,
-                model=translate_model,
-                mode=translate_mode,
-                metrics=metrics,
-            )
-            if not translated.strip():
-                raise RuntimeError("Translate returned empty text.")
-
-            await ctx.info("Synthesizing dubbed audio…")
-            stored = await tts_synthesize(
-                sc,
-                translated,
-                target_language_code=target_language_code,
-                speaker=speaker,
-                filename_prefix="sv-dub",
-                metrics=metrics,
-            )
+                await ctx.info("Synthesizing dubbed audio…")
+                stored = await tts_synthesize(
+                    sc,
+                    translated,
+                    target_language_code=target_language_code,
+                    speaker=speaker,
+                    filename_prefix="sv-dub",
+                    metrics=metrics,
+                )
 
         return {
             "source_transcript": transcript,

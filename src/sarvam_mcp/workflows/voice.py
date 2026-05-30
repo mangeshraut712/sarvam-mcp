@@ -6,7 +6,6 @@ voice agent reachable from any MCP client.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from fastmcp import Context, FastMCP
@@ -19,6 +18,7 @@ from sarvam_mcp.tools._common import (
     SarvamLLM,
     TtsLanguageCode,
     ready_ctx,
+    resolve_file_input,
 )
 from sarvam_mcp.workflows._helpers import (
     llm_complete,
@@ -42,7 +42,10 @@ def register(mcp: FastMCP) -> None:
     )
     async def sv_voice(
         ctx: Context,
-        audio_path: str = Field(description="Absolute path to the input audio file."),
+        audio_path: str | None = Field(default=None, description="Local path to the input audio file."),
+        audio_base64: str | None = Field(default=None, description="Base64-encoded audio data."),
+        audio_url: str | None = Field(default=None, description="URL to fetch the audio file from."),
+        filename: str | None = Field(default=None, description="Filename with extension (for base64/URL)."),
         system_prompt: str = Field(
             default=(
                 "You are a concise, helpful assistant fluent in Indic languages. "
@@ -68,42 +71,42 @@ def register(mcp: FastMCP) -> None:
         ),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
-        path = Path(audio_path).expanduser()
-        if not path.is_file():
-            raise FileNotFoundError(f"Audio file not found: {path}")
+        async with resolve_file_input(
+            file_path=audio_path, file_base64=audio_base64,
+            file_url=audio_url, filename=filename,
+        ) as path:
+            with measure_tool() as metrics:
+                await ctx.info("Transcribing input audio…")
+                transcript, detected_lang = await stt_transcribe(
+                    sc, path, language_code=input_language, metrics=metrics
+                )
+                if not transcript.strip():
+                    raise RuntimeError("STT returned an empty transcript — nothing to reply to.")
 
-        with measure_tool() as metrics:
-            await ctx.info("Transcribing input audio…")
-            transcript, detected_lang = await stt_transcribe(
-                sc, path, language_code=input_language, metrics=metrics
-            )
-            if not transcript.strip():
-                raise RuntimeError("STT returned an empty transcript — nothing to reply to.")
+                target_tts_lang = reply_language or _coerce_tts_language(detected_lang)
 
-            target_tts_lang = reply_language or _coerce_tts_language(detected_lang)
+                await ctx.info("Generating LLM reply…")
+                reply_text = await llm_complete(
+                    sc,
+                    [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": transcript},
+                    ],
+                    model=llm_model,
+                    metrics=metrics,
+                )
+                if not reply_text:
+                    raise RuntimeError("LLM returned an empty reply.")
 
-            await ctx.info("Generating LLM reply…")
-            reply_text = await llm_complete(
-                sc,
-                [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": transcript},
-                ],
-                model=llm_model,
-                metrics=metrics,
-            )
-            if not reply_text:
-                raise RuntimeError("LLM returned an empty reply.")
-
-            await ctx.info("Synthesizing reply audio…")
-            stored = await tts_synthesize(
-                sc,
-                reply_text,
-                target_language_code=target_tts_lang,
-                speaker=speaker,
-                filename_prefix="sv-voice",
-                metrics=metrics,
-            )
+                await ctx.info("Synthesizing reply audio…")
+                stored = await tts_synthesize(
+                    sc,
+                    reply_text,
+                    target_language_code=target_tts_lang,
+                    speaker=speaker,
+                    filename_prefix="sv-voice",
+                    metrics=metrics,
+                )
 
         return {
             "transcript": transcript,
