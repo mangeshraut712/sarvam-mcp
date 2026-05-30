@@ -71,7 +71,8 @@ def register(mcp: FastMCP) -> None:
             "Runtime tool — calls Sarvam API now.\n\n"
             "Create a new pronunciation dictionary with word → pronunciation "
             "mappings. These dictionaries can be referenced in TTS calls to "
-            "control how specific words are spoken."
+            "control how specific words are spoken.\n\n"
+            "Max 100 words per dictionary, 10 dictionaries per user."
         ),
     )
     async def sarvam_pronunciation_create(
@@ -79,12 +80,17 @@ def register(mcp: FastMCP) -> None:
         entries: dict[str, str] = Field(
             description=(
                 "Word-to-pronunciation mappings: "
-                "{'Sarvam': 'सर्वम', 'API': 'ए पी आई'}."
+                "{'Sarvam': 'Saarvam', 'CEO': 'see ee oh'}."
             ),
+        ),
+        language_code: str = Field(
+            default="hi-IN",
+            description="BCP-47 language code for these entries, e.g. 'hi-IN', 'en-IN', 'ta-IN'.",
         ),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
-        dict_bytes = json.dumps(entries, ensure_ascii=False).encode("utf-8")
+        dictionary = {"pronunciations": {language_code: entries}}
+        dict_bytes = json.dumps(dictionary, ensure_ascii=False).encode("utf-8")
         with measure_tool() as metrics:
             payload, call = await sc.client.post_multipart(
                 PRONDICT_BASE,
