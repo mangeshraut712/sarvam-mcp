@@ -23,6 +23,6 @@ def current_auth() -> StaticKeyProvider:
         raise RuntimeError(
             "Not authenticated. Set SARVAM_API_KEY environment variable or "
             "add your key to ~/.sarvam/credentials. "
-            "Get a key at https://dashboard.sarvam.ai"
+            "Get a key at https://dashboard.sarvam.ai/key-management"
         )
     return provider

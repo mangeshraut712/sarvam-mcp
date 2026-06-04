@@ -19,7 +19,7 @@ from sarvam_mcp.auth.api_key import StaticKeyProvider
 from sarvam_mcp.auth.context import set_auth
 
 CREDENTIALS_PATH = Path("~/.sarvam/credentials").expanduser()
-DASHBOARD_URL = "https://dashboard.sarvam.ai/api-keys"
+DASHBOARD_URL = "https://dashboard.sarvam.ai/key-management"
 
 
 def register(mcp: FastMCP) -> None:

@@ -119,7 +119,7 @@ _LANDING_HTML = """\
 
     <div class="section">
       <h2>1. Get your API key</h2>
-      <p>Sign up or log in at <a href="https://dashboard.sarvam.ai" target="_blank">dashboard.sarvam.ai</a> and copy your API key.</p>
+      <p>Sign up or log in at <a href="https://dashboard.sarvam.ai/key-management" target="_blank">dashboard.sarvam.ai/key-management</a> and copy your API key.</p>
     </div>
 
     <div class="section">

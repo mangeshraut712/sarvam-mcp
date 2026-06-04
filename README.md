@@ -8,7 +8,7 @@ Cross-platform Python package: **macOS, Windows, and Linux** (Python 3.11+).
 
 ### 1. Get your API key
 
-Sign up or log in at **[dashboard.sarvam.ai](https://dashboard.sarvam.ai)** and copy your API key (`sk_...`).
+Sign up or log in at **[dashboard.sarvam.ai/key-management](https://dashboard.sarvam.ai/key-management)** and copy your API key (`sk_...`).
 
 ### 2. Add to your MCP client
 

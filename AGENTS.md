@@ -53,7 +53,7 @@ These tools return documentation, code snippets, API reference, and project temp
 Authentication uses **API keys**.
 
 - **Setup:** Set `SARVAM_API_KEY` in the MCP client config JSON (`"env": {"SARVAM_API_KEY": "sk_..."}`), or store it in `~/.sarvam/credentials` as `api_key = sk_...`.
-- **Get a key:** Sign up / log in at [dashboard.sarvam.ai](https://dashboard.sarvam.ai) and copy your API key.
+- **Get a key:** Sign up / log in at [dashboard.sarvam.ai/key-management](https://dashboard.sarvam.ai/key-management) and copy your API key.
 - **How it works:** The server reads the key from the env var (or credentials file) at startup and sends it as `api-subscription-key` header on all outbound Sarvam API calls.
 
 If a tool returns an auth error, the user needs to check their API key is set correctly.

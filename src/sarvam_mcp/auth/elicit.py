@@ -19,7 +19,7 @@ from sarvam_mcp.auth.context import _current, set_auth
 
 logger = logging.getLogger("sarvam_mcp.auth")
 
-DASHBOARD_URL = "https://dashboard.sarvam.ai"
+DASHBOARD_URL = "https://dashboard.sarvam.ai/key-management"
 
 _CREDENTIALS_TILDE = "~/.sarvam/credentials"
 CREDENTIALS_PATH = Path(_CREDENTIALS_TILDE).expanduser()
