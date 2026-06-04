@@ -21,6 +21,9 @@ logger = logging.getLogger("sarvam_mcp")
 @asynccontextmanager
 async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
     """Build shared deps once at server start; tear down at shutdown."""
+    from sarvam_mcp import __version__
+    from sarvam_mcp.tools.update import check_pypi_version
+
     config = Config.load()
 
     if config.api_key:
@@ -31,9 +34,20 @@ async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
 
     client = SarvamClient(config.base_url, region=config.region)
     sink = build_sink(config.output_mode, config.base_path)
-    ctx = ServerContext(config=config, client=client, audio_sink=sink)
+
+    update_info = await check_pypi_version(__version__)
+    ctx = ServerContext(config=config, client=client, audio_sink=sink, update_info=update_info)
+
+    if update_info.update_available:
+        logger.info(
+            "Update available: v%s → v%s  (pip install --upgrade sarvam-mcp)",
+            update_info.current,
+            update_info.latest,
+        )
+
     logger.info(
-        "sarvam-mcp ready · base_url=%s region=%s output_mode=%s base_path=%s auth=%s",
+        "sarvam-mcp ready · v%s · base_url=%s region=%s output_mode=%s base_path=%s auth=%s",
+        __version__,
         config.base_url,
         config.region,
         config.output_mode,
@@ -59,10 +73,12 @@ def build_server() -> FastMCP:
         translate,
         transliterate,
         tts,
+        update,
         vision,
     )
 
     auth.register(mcp)
+    update.register(mcp)
     stt.register(mcp)
     tts.register(mcp)
     translate.register(mcp)
