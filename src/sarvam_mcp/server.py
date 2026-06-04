@@ -20,22 +20,14 @@ logger = logging.getLogger("sarvam_mcp")
 
 @asynccontextmanager
 async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
-    """Build shared deps once at server start; tear down at shutdown.
-
-    The server starts cleanly even without a stored token — the first tool
-    call will direct the user to ``sarvam_tools_auth_login``.
-    """
+    """Build shared deps once at server start; tear down at shutdown."""
     config = Config.load()
 
-    # Check for a stored OAuth token from a previous login.
-    from sarvam_mcp.tools.auth import try_stored_token
-
-    stored = try_stored_token()
-    if stored:
-        set_auth(StaticKeyProvider(stored))
-        auth_status = "configured (stored token)"
+    if config.api_key:
+        set_auth(StaticKeyProvider(config.api_key))
+        auth_status = "configured"
     else:
-        auth_status = "deferred (will prompt on first tool call)"
+        auth_status = "deferred (will error on first tool call — set SARVAM_API_KEY)"
 
     client = SarvamClient(config.base_url, region=config.region)
     sink = build_sink(config.output_mode, config.base_path)
@@ -58,13 +50,8 @@ def build_server() -> FastMCP:
     """Construct the FastMCP server with all tools registered."""
     mcp = FastMCP("sarvam-mcp", lifespan=_lifespan)
 
-    # Auth tools — login + status
-    from sarvam_mcp.tools import auth
-
-    auth.register(mcp)
-
-    # Atomic tools — registered eagerly. Each module exposes ``register(mcp)``.
     from sarvam_mcp.tools import (
+        auth,
         language,
         llm,
         pronunciation,
@@ -75,6 +62,7 @@ def build_server() -> FastMCP:
         vision,
     )
 
+    auth.register(mcp)
     stt.register(mcp)
     tts.register(mcp)
     translate.register(mcp)
@@ -98,15 +86,8 @@ def build_server() -> FastMCP:
 def main() -> None:
     """Console entry point for ``uvx sarvam-mcp`` / ``sarvam-mcp``.
 
-    Subcommands:
-        (no args)  — run the MCP server over stdio (the default).
-        login      — interactive OAuth login: opens your browser, catches
-                     the callback, and saves the token to ~/.sarvam/credentials.
+    Runs the MCP server over stdio.
     """
-    if len(sys.argv) > 1 and sys.argv[1] == "login":
-        _run_login()
-        return
-
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s — %(message)s",
@@ -114,46 +95,6 @@ def main() -> None:
     )
     server = build_server()
     server.run()
-
-
-def _run_login() -> None:
-    """Interactive ``sarvam-mcp login`` — OAuth flow from the terminal."""
-    import asyncio
-
-    from sarvam_mcp.tools.auth import persist_token, try_stored_token
-
-    print("\nSarvam MCP — OAuth login")
-    print("─" * 40)
-
-    existing = try_stored_token()
-    if existing:
-        print("You already have a stored token.")
-        print("Re-authenticate? [y/N] ", end="", flush=True)
-        if input().strip().lower() not in ("y", "yes"):
-            print("Aborted.")
-            return
-
-    print("Opening browser for Sarvam login...\n")
-
-    async def _do_login() -> str:
-        from unittest.mock import AsyncMock
-
-        from sarvam_mcp.tools.auth import _run_oauth_flow
-
-        mock_ctx = AsyncMock()
-        mock_ctx.info = AsyncMock(side_effect=lambda msg: print(f"  {msg}"))
-        return await _run_oauth_flow(mock_ctx)
-
-    try:
-        token = asyncio.run(_do_login())
-    except Exception as exc:
-        print(f"\nLogin failed: {exc}")
-        sys.exit(1)
-
-    persist_token(token)
-    print(f"\n✓ Token saved to ~/.sarvam/credentials")
-    print("  Permissions: 0600 (owner-only)")
-    print("\nYou can now use sarvam-mcp without additional setup.")
 
 
 if __name__ == "__main__":
