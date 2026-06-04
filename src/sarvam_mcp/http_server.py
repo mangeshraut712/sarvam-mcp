@@ -61,7 +61,7 @@ _LANDING_HTML = """\
       line-height: 1.6;
       text-align: center;
     }
-    a { color: #2563eb; text-decoration: none; }
+    a { color: #141414; text-decoration: none; }
     a:hover { text-decoration: underline; }
     .cmd {
       display: flex;
