@@ -29,7 +29,7 @@ _LANDING_HTML = """\
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sarvam MCP — Install</title>
+  <title>Sarvam MCP</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -45,25 +45,22 @@ _LANDING_HTML = """\
     }
     .card {
       width: 100%;
-      max-width: 640px;
+      max-width: 580px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       border-radius: 20px;
       padding: 24px;
       border: 1px solid #f0f0f0;
       background: #fff;
     }
     .logo { height: 32px; margin: 0 auto 4px; }
-    h1 { font-size: 20px; text-align: center; font-weight: 600; }
-    h2 { font-size: 14px; font-weight: 600; color: #333; margin-top: 8px; }
-    p, li {
+    p {
       color: #555;
       font-size: 13px;
       line-height: 1.6;
+      text-align: center;
     }
-    ol { padding-left: 20px; }
-    ol li { margin-bottom: 8px; }
     a { color: #2563eb; text-decoration: none; }
     a:hover { text-decoration: underline; }
     .cmd {
@@ -71,7 +68,7 @@ _LANDING_HTML = """\
       align-items: center;
       gap: 8px;
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 14px 16px;
       border: 1px solid #e5e5e5;
       background: #fafafa;
       cursor: pointer;
@@ -85,7 +82,6 @@ _LANDING_HTML = """\
       color: #141414;
       user-select: all;
       white-space: pre-wrap;
-      word-break: break-all;
       text-align: left;
     }
     .cmd .copy-icon {
@@ -97,37 +93,39 @@ _LANDING_HTML = """\
       transition: color 0.15s ease;
     }
     .cmd:hover .copy-icon { color: #141414; }
-    .section { margin-top: 4px; }
     .note {
       font-size: 12px;
       color: #888;
+      text-align: center;
+    }
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
       margin-top: 4px;
     }
   </style>
   <script>
-    function copyText(id) {
-      const el = document.getElementById(id);
+    function copyJson() {
+      const el = document.getElementById('json-config');
       navigator.clipboard.writeText(el.textContent);
+      const icon = document.getElementById('ci');
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+      icon.style.color = '#16a34a';
+      setTimeout(() => {
+        icon.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>';
+        icon.style.color = '';
+      }, 1500);
     }
   </script>
 </head>
 <body>
   <div class="card">
     <img src="/static/sarvam-logo.png" alt="Sarvam" class="logo">
-    <h1>Sarvam MCP Server</h1>
-    <p style="text-align:center;color:#666;">Use Sarvam AI APIs (STT, TTS, Translate, LLM, Vision) from any MCP client.</p>
+    <p>Paste this JSON into your favorite agent (Cursor, Claude Desktop, Windsurf, etc.) and it'll set up Sarvam for you.</p>
 
-    <div class="section">
-      <h2>1. Get your API key</h2>
-      <p>Sign up or log in at <a href="https://dashboard.sarvam.ai/key-management" target="_blank">dashboard.sarvam.ai/key-management</a> and copy your API key.</p>
-    </div>
-
-    <div class="section">
-      <h2>2. Add to your MCP client</h2>
-      <p>Paste this JSON into your MCP config (Cursor, Claude Desktop, Windsurf, etc.):</p>
-    </div>
-
-    <div class="cmd" onclick="copyText('json-config')">
+    <div class="cmd" onclick="copyJson()">
       <code id="json-config">{
   "mcpServers": {
     "sarvam": {
@@ -139,23 +137,15 @@ _LANDING_HTML = """\
     }
   }
 }</code>
-      <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/></svg>
+      <svg id="ci" class="copy-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/></svg>
     </div>
 
-    <p class="note">Replace <code>your_api_key_here</code> with your actual API key from the dashboard.</p>
+    <p class="note">API key optional upfront — the server will ask for it on first use.<br>Or grab one now from <a href="https://dashboard.sarvam.ai/key-management" target="_blank">dashboard.sarvam.ai/key-management</a></p>
 
-    <div class="section">
-      <h2>Config file locations</h2>
-      <ol>
-        <li><strong>Cursor</strong> — <code>~/.cursor/mcp.json</code></li>
-        <li><strong>Claude Desktop</strong> — <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</li>
-        <li><strong>Claude Code</strong> — <code>claude mcp add sarvam -- uvx sarvam-mcp</code></li>
-      </ol>
-    </div>
-
-    <div class="section">
-      <h2>That's it!</h2>
-      <p>Once configured, your MCP client will have access to all Sarvam tools — transcription, speech synthesis, translation, transliteration, language detection, LLM, and document intelligence.</p>
+    <div class="links">
+      <a href="https://github.com/sarvamai/sarvam-mcp" target="_blank">GitHub</a>
+      <a href="https://docs.sarvam.ai" target="_blank">Docs</a>
+      <a href="https://dashboard.sarvam.ai/key-management" target="_blank">Get API Key</a>
     </div>
   </div>
 </body>
