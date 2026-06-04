@@ -164,15 +164,9 @@ async def static_files(request):
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
-async def health_check(request):  # noqa: ARG001
-    return JSONResponse({"status": "ok", "service": "sarvam-mcp"})
-
-
 app = Starlette(
     routes=[
         Route("/", landing),
-        Route("/health", health_check),
-        Route("/ready", health_check),
         Route("/static/{path:path}", static_files),
     ],
 )
