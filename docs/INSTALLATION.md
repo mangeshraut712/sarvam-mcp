@@ -35,6 +35,12 @@ Click the install link — Cursor opens and asks you to confirm:
 
 [![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=sarvam&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJzYXJ2YW0tbWNwIl19)
 
+If the button opens a tab that closes without launching Cursor (the browser blocked the app prompt), paste this deeplink into your browser's address bar instead:
+
+```
+cursor://anysphere.cursor-deeplink/mcp/install?name=sarvam&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJzYXJ2YW0tbWNwIl19
+```
+
 Then set your API key once in `~/.sarvam/credentials` (see above), or add the `env` block via Cursor Settings → MCP → sarvam → edit.
 
 ### Manual
