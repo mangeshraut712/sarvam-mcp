@@ -61,7 +61,6 @@ Instead of setting `SARVAM_API_KEY` in the JSON config, you can store it in `~/.
 
 ```ini
 api_key = sk_...
-region = in
 ```
 
 The server checks `SARVAM_API_KEY` env var first, then falls back to `~/.sarvam/credentials`.
@@ -102,7 +101,6 @@ All defaults below reflect the latest non-deprecated models.
 | Env var | Default | Description |
 |---|---|---|
 | `SARVAM_API_KEY` | — | Required. API key from dashboard.sarvam.ai. |
-| `SARVAM_API_REGION` | `in` | Data residency region. |
 | `SARVAM_API_BASE_URL` | `https://api.sarvam.ai` | Override for testing/staging. |
 | `SARVAM_MCP_BASE_PATH` | `~/Desktop` | Where audio/document files land. |
 | `SARVAM_AUDIO_OUTPUT_MODE` | `files` | `files` \| `resources` \| `both`. |

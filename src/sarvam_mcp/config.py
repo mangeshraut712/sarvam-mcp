@@ -1,4 +1,4 @@
-"""Configuration: env vars, ~/.sarvam/credentials, region, output mode."""
+"""Configuration: env vars, ~/.sarvam/credentials, output mode."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from typing import Literal
 OutputMode = Literal["files", "resources", "both"]
 
 DEFAULT_BASE_URL = "https://api.sarvam.ai"
-DEFAULT_REGION = "in"
 DEFAULT_BASE_PATH = "~/Desktop"
 DEFAULT_OUTPUT_MODE: OutputMode = "files"
 
@@ -20,7 +19,6 @@ class Config:
     """Resolved runtime configuration. Built once at server startup."""
 
     api_key: str | None = None
-    region: str = DEFAULT_REGION
     base_url: str = DEFAULT_BASE_URL
     base_path: Path = field(default_factory=lambda: Path(DEFAULT_BASE_PATH).expanduser())
     output_mode: OutputMode = DEFAULT_OUTPUT_MODE
@@ -31,7 +29,6 @@ class Config:
         creds = _read_credentials_file()
 
         api_key = os.environ.get("SARVAM_API_KEY") or creds.get("api_key")
-        region = os.environ.get("SARVAM_API_REGION") or creds.get("region") or DEFAULT_REGION
         base_url = os.environ.get("SARVAM_API_BASE_URL", DEFAULT_BASE_URL)
         base_path_str = os.environ.get("SARVAM_MCP_BASE_PATH", DEFAULT_BASE_PATH)
         mode_str = os.environ.get("SARVAM_AUDIO_OUTPUT_MODE", DEFAULT_OUTPUT_MODE).lower()
@@ -46,7 +43,6 @@ class Config:
 
         return cls(
             api_key=api_key,
-            region=region,
             base_url=base_url.rstrip("/"),
             base_path=base_path,
             output_mode=mode_str,  # type: ignore[arg-type]

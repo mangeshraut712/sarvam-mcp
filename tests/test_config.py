@@ -19,31 +19,11 @@ def test_credentials_file_parses_quoted_and_comments(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     _write_creds(
         tmp_path,
-        '# leading comment\napi_key = "sk_quoted"\nregion=in\n\n  ignored line\n',
+        '# leading comment\napi_key = "sk_quoted"\n\n  ignored line\n',
     )
     parsed = _read_credentials_file()
     assert parsed["api_key"] == "sk_quoted"
-    assert parsed["region"] == "in"
     assert "ignored line" not in parsed
-
-
-def test_region_from_credentials_file(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
-    _write_creds(tmp_path, "api_key = sk_test\nregion = us\n")
-    monkeypatch.delenv("SARVAM_API_REGION", raising=False)
-    monkeypatch.delenv("SARVAM_API_KEY", raising=False)
-
-    cfg = Config.load()
-    assert cfg.region == "us"
-
-
-def test_region_env_wins_over_credentials_file(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
-    _write_creds(tmp_path, "api_key = sk_test\nregion = us\n")
-    monkeypatch.setenv("SARVAM_API_REGION", "eu")
-
-    cfg = Config.load()
-    assert cfg.region == "eu"
 
 
 def test_invalid_output_mode_raises(monkeypatch, tmp_path):

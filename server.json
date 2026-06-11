@@ -26,13 +26,6 @@
           "is_secret": true
         },
         {
-          "name": "SARVAM_API_REGION",
-          "description": "Data residency region. Defaults to 'in' if not provided.",
-          "is_required": false,
-          "format": "string",
-          "is_secret": false
-        },
-        {
           "name": "SARVAM_API_BASE_URL",
           "description": "Override API base URL for testing/staging. Defaults to https://api.sarvam.ai",
           "is_required": false,

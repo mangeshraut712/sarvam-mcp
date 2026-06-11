@@ -32,7 +32,7 @@ async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
     else:
         auth_status = "deferred (will error on first tool call — set SARVAM_API_KEY)"
 
-    client = SarvamClient(config.base_url, region=config.region)
+    client = SarvamClient(config.base_url)
     sink = build_sink(config.output_mode, config.base_path)
 
     update_info = await check_pypi_version(__version__)
@@ -46,10 +46,9 @@ async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
         )
 
     logger.info(
-        "sarvam-mcp ready · v%s · base_url=%s region=%s output_mode=%s base_path=%s auth=%s",
+        "sarvam-mcp ready · v%s · base_url=%s output_mode=%s base_path=%s auth=%s",
         __version__,
         config.base_url,
-        config.region,
         config.output_mode,
         config.base_path,
         auth_status,

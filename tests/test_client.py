@@ -15,7 +15,7 @@ from sarvam_mcp.http.errors import SarvamBadRequestError
 
 @pytest.fixture
 async def client():
-    c = SarvamClient("https://api.sarvam.ai", region="in")
+    c = SarvamClient("https://api.sarvam.ai")
     yield c
     await c.aclose()
 
