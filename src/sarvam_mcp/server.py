@@ -99,11 +99,73 @@ def build_server() -> FastMCP:
     return mcp
 
 
+def _print_config(api_key: str | None = None) -> None:
+    """Print MCP client configuration JSON to stdout."""
+    import json
+    import shutil
+
+    env: dict[str, str] = {}
+    if api_key:
+        env["SARVAM_API_KEY"] = api_key
+
+    use_uvx = shutil.which("uvx") is not None
+
+    if use_uvx:
+        config = {
+            "mcpServers": {
+                "Sarvam": {
+                    "command": "uvx",
+                    "args": ["sarvam-mcp"],
+                    **({"env": env} if env else {}),
+                }
+            }
+        }
+    else:
+        config = {
+            "mcpServers": {
+                "Sarvam": {
+                    "command": "python",
+                    "args": ["-m", "sarvam_mcp"],
+                    **({"env": env} if env else {}),
+                }
+            }
+        }
+
+    print(json.dumps(config, indent=2))
+
+
 def main() -> None:
     """Console entry point for ``uvx sarvam-mcp`` / ``sarvam-mcp``.
 
-    Runs the MCP server over stdio.
+    Supports:
+        sarvam-mcp                         — run the MCP server over stdio
+        sarvam-mcp --print                 — print MCP client config JSON
+        sarvam-mcp --api-key=sk_... --print — include API key in the config
     """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="sarvam-mcp",
+        description="Sarvam AI MCP server — STT, TTS, Translate & more for Indic languages",
+    )
+    parser.add_argument(
+        "--api-key",
+        metavar="KEY",
+        help="Sarvam API key to embed in the printed config",
+    )
+    parser.add_argument(
+        "--print",
+        dest="print_config",
+        action="store_true",
+        help="Print MCP client configuration JSON and exit",
+    )
+
+    args = parser.parse_args()
+
+    if args.print_config:
+        _print_config(args.api_key)
+        return
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s — %(message)s",
