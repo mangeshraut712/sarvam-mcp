@@ -33,20 +33,32 @@ export interface ToolEvent {
   python: string;
   os: string;
   install_id: string;
+  arguments?: Record<string, unknown>;
+  response?: unknown;
 }
 
 export function emitToolUsed(event: ToolEvent): void {
+  const attributes: Record<string, string> = {
+    "mcp.tool": event.tool,
+    "mcp.status": event.status,
+    "mcp.version": event.version,
+    "mcp.python": event.python,
+    "mcp.os": event.os,
+    "mcp.install_id": event.install_id,
+  };
+
+  if (event.arguments !== undefined) {
+    attributes["mcp.arguments"] = JSON.stringify(event.arguments);
+  }
+  if (event.response !== undefined) {
+    const raw = JSON.stringify(event.response);
+    attributes["mcp.response"] = raw.length > 10_000 ? raw.slice(0, 10_000) : raw;
+  }
+
   logger.emit({
     severityNumber: SeverityNumber.INFO,
     severityText: "INFO",
     body: "tool_used",
-    attributes: {
-      "mcp.tool": event.tool,
-      "mcp.status": event.status,
-      "mcp.version": event.version,
-      "mcp.python": event.python,
-      "mcp.os": event.os,
-      "mcp.install_id": event.install_id,
-    },
+    attributes,
   });
 }
