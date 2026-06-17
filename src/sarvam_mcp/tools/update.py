@@ -2,7 +2,7 @@
 
 On every server startup the lifespan fires ``check_pypi_version`` which
 hits the PyPI JSON API once.  The result is stashed on ``ServerContext``
-so the ``sarvam_tools_update`` tool can report / trigger an upgrade
+so the ``sarvam_tools_upgrade`` tool can report / trigger an upgrade
 without a second network call.
 """
 
@@ -100,21 +100,20 @@ def _upgrade_pip() -> tuple[bool, str]:
 
 
 def register(mcp: FastMCP) -> None:
-    """Register the update-check tool."""
+    """Register the upgrade tool."""
 
     @mcp.tool()
-    async def sarvam_tools_update(
+    async def sarvam_tools_upgrade(
         ctx: Context,
         confirm_upgrade: bool = False,
     ) -> dict[str, Any]:
-        """Check if a newer version of sarvam-mcp is available on PyPI.
+        """Check for updates and upgrade sarvam-mcp to the latest version.
 
-        Called automatically at startup and cached — calling this tool is
-        instant (no extra network request).
+        Call this when the user asks to update, upgrade, or check for newer
+        versions of the sarvam MCP server.
 
-        Set ``confirm_upgrade=True`` to actually run
-        ``pip install --upgrade sarvam-mcp`` right now.
-        After upgrading, restart the MCP server to use the new version.
+        Set ``confirm_upgrade=True`` to actually perform the upgrade.
+        After upgrading, restart the MCP server for changes to take effect.
         """
         sc = server_ctx(ctx)
         info: UpdateInfo | None = sc.update_info
