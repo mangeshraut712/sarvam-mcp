@@ -8,7 +8,7 @@ commonEnv: []
 
 sarvam-mcp-website:
   name: "sarvam-mcp-website"
-  namespace: "apps-authoring"
+  namespace: "sarvam-mcp"
 
   serviceAccount:
     enabled: true
