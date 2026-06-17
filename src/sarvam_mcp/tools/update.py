@@ -53,7 +53,38 @@ async def check_pypi_version(current_version: str, *, timeout: float = 5.0) -> U
 
 
 def _run_upgrade() -> tuple[bool, str]:
-    """Run pip install --upgrade sarvam-mcp in a subprocess."""
+    """Upgrade sarvam-mcp using the appropriate method (uvx or pip)."""
+    import shutil
+
+    if shutil.which("uv") and _is_uvx_install():
+        return _upgrade_uvx()
+    return _upgrade_pip()
+
+
+def _is_uvx_install() -> bool:
+    """Heuristic: if the executable lives in a uv/tools directory, it's a uvx install."""
+    exe = sys.executable
+    return "uv" in exe and "tools" in exe
+
+
+def _upgrade_uvx() -> tuple[bool, str]:
+    """Upgrade via uv tool upgrade."""
+    try:
+        result = subprocess.run(
+            ["uv", "tool", "upgrade", PACKAGE_NAME],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode == 0:
+            return True, result.stdout.strip()
+        return False, result.stderr.strip() or result.stdout.strip()
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _upgrade_pip() -> tuple[bool, str]:
+    """Upgrade via pip install --upgrade."""
     try:
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", "--upgrade", PACKAGE_NAME],
@@ -102,7 +133,7 @@ def register(mcp: FastMCP) -> None:
                 "message": (
                     f"Couldn't reach PyPI to check for updates: {info.check_error}\n"
                     f"You're on v{info.current}. "
-                    "You can manually run: pip install --upgrade sarvam-mcp"
+                    "You can manually run: uv tool upgrade sarvam-mcp (or pip install --upgrade sarvam-mcp)"
                 ),
             }
 
@@ -124,6 +155,7 @@ def register(mcp: FastMCP) -> None:
                     f"v{info.current} → v{info.latest}\n\n"
                     "Call this tool again with confirm_upgrade=True to upgrade now, "
                     "or run manually:\n"
+                    f"  uv tool upgrade {PACKAGE_NAME}\n"
                     f"  pip install --upgrade {PACKAGE_NAME}"
                 ),
             }
@@ -151,6 +183,7 @@ def register(mcp: FastMCP) -> None:
             "message": (
                 f"Automatic upgrade failed.\n\n"
                 "Try manually:\n"
+                f"  uv tool upgrade {PACKAGE_NAME}\n"
                 f"  pip install --upgrade {PACKAGE_NAME}\n\n"
                 f"Error: {output}"
             ),
