@@ -9,6 +9,7 @@ const REQUIRED_FIELDS: (keyof ToolEvent)[] = [
   "os",
   "install_id",
 ];
+// "arguments" and "response" are optional
 
 export async function POST(request: Request) {
   try {
