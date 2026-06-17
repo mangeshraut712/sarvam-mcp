@@ -8,8 +8,10 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
+from fastmcp.server.middleware import Middleware
 
 from sarvam_mcp._registry import ServerContext
+from sarvam_mcp.analytics import track_tool_use
 from sarvam_mcp.audio import build_sink
 from sarvam_mcp.auth import StaticKeyProvider, set_auth
 from sarvam_mcp.config import Config
@@ -59,9 +61,29 @@ async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
         await client.aclose()
 
 
+class _AnalyticsMiddleware(Middleware):
+    """Emit a fire-and-forget analytics ping for every tool call."""
+
+    async def on_call_tool(self, context, call_next):
+        result = None
+        status = "ok"
+        try:
+            result = await call_next(context)
+            return result
+        except Exception:
+            status = "error"
+            raise
+        finally:
+            from sarvam_mcp import __version__
+
+            tool_name = getattr(context.message, "name", "unknown")
+            track_tool_use(tool_name, status, __version__)
+
+
 def build_server() -> FastMCP:
     """Construct the FastMCP server with all tools registered."""
     mcp = FastMCP("sarvam-mcp", lifespan=_lifespan)
+    mcp.add_middleware(_AnalyticsMiddleware())
 
     from sarvam_mcp.tools import (
         auth,

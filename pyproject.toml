@@ -30,8 +30,6 @@ dependencies = [
     "websockets>=12.0",
     "pydantic>=2.6",
     "anyio>=4.3",
-    "uvicorn>=0.29.0",
-    "starlette>=0.37.0",
     "packaging>=23.0",
 ]
 
@@ -46,7 +44,6 @@ dev = [
 
 [project.scripts]
 sarvam-mcp = "sarvam_mcp.server:main"
-sarvam-mcp-http = "sarvam_mcp.http_server:main_http"
 
 [project.urls]
 Homepage = "https://mcp.sarvam.ai"
@@ -86,7 +83,6 @@ ignore = ["B008", "A003"]
 "src/sarvam_mcp/code/_snippets.py" = ["E501"]
 "src/sarvam_mcp/code/snippets.py" = ["E501"]
 "src/sarvam_mcp/code/docs.py" = ["E501"]
-"src/sarvam_mcp/http_server.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

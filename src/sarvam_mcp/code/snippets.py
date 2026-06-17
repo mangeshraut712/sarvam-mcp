@@ -261,8 +261,7 @@ def _recommend(task: str) -> dict[str, Any]:
         "task": task,
         "suggestion": (
             "Couldn't pick confidently from the task description. "
-            "Browse the docs with sarvam_code_search_docs or list available "
-            "endpoints with sarvam_code_api_reference."
+            "List available endpoints with sarvam_code_api_reference."
         ),
     }
 
