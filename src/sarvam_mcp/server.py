@@ -17,6 +17,20 @@ from sarvam_mcp.auth import StaticKeyProvider, set_auth
 from sarvam_mcp.config import Config
 from sarvam_mcp.http import SarvamClient
 
+try:
+    import base64
+    from pathlib import Path as _Path
+
+    from mcp.types import Icon
+
+    _icon_path = _Path(__file__).parent / "icon.svg"
+    _icon_b64 = base64.b64encode(_icon_path.read_bytes()).decode()
+    _SERVER_ICONS = [
+        Icon(src=f"data:image/svg+xml;base64,{_icon_b64}", mimeType="image/svg+xml"),
+    ]
+except Exception:
+    _SERVER_ICONS = []
+
 logger = logging.getLogger("sarvam_mcp")
 
 
@@ -86,7 +100,7 @@ class _AnalyticsMiddleware(Middleware):
 
 def build_server() -> FastMCP:
     """Construct the FastMCP server with all tools registered."""
-    mcp = FastMCP("sarvam-mcp", lifespan=_lifespan)
+    mcp = FastMCP("sarvam-mcp", lifespan=_lifespan, icons=_SERVER_ICONS)
     mcp.add_middleware(_AnalyticsMiddleware())
 
     from sarvam_mcp.tools import (
