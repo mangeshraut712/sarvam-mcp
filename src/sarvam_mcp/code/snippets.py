@@ -300,7 +300,7 @@ _VALID_TRANSLATE_MODELS = {"mayura:v1", "sarvam-translate:v1"}
 _VALID_STT_MODELS = {"saaras:v3"}
 _VALID_STT_MODES = {"transcribe", "translate", "verbatim", "translit", "codemix"}
 _VALID_SAARAS_MODELS = {"saaras:v3", "saaras:v3-realtime", "saaras:v2.5"}
-_VALID_LANGUAGE_CODES = {lang["code"] for lang in _data.ALL_LANGUAGES} | {"unknown"}
+_VALID_LANGUAGE_CODES = {lang["code"] for lang in _data.ALL_LANGUAGES} | {"auto", "unknown"}
 _TTS_LANG_CODES = {lang["code"] for lang in _data.LANGUAGES_BY_API["tts"]}
 
 
