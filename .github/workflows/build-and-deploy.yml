@@ -3,9 +3,11 @@ name: Build and Push Container
 on:
   push:
     branches: [main]
+    paths: ['web/**', '.github/workflows/build-and-deploy.yml']
     tags: ["v*"]
   pull_request:
     branches: [main]
+    paths: ['web/**', '.github/workflows/build-and-deploy.yml']
 
 permissions:
   contents: read
