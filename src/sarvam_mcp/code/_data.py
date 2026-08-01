@@ -47,26 +47,44 @@ ALL_LANGUAGES: list[dict[str, str]] = [
 ]
 
 _TTS_CODES = {
-    "en-IN", "hi-IN", "bn-IN", "ta-IN", "te-IN", "gu-IN",
-    "kn-IN", "ml-IN", "mr-IN", "pa-IN", "od-IN",
+    "en-IN",
+    "hi-IN",
+    "bn-IN",
+    "ta-IN",
+    "te-IN",
+    "gu-IN",
+    "kn-IN",
+    "ml-IN",
+    "mr-IN",
+    "pa-IN",
+    "od-IN",
 }
 
 # LID only supports 11 languages per the /text-lid OpenAPI spec.
 _LID_CODES = {
-    "en-IN", "hi-IN", "bn-IN", "ta-IN", "te-IN", "gu-IN",
-    "kn-IN", "ml-IN", "mr-IN", "pa-IN", "od-IN",
+    "en-IN",
+    "hi-IN",
+    "bn-IN",
+    "ta-IN",
+    "te-IN",
+    "gu-IN",
+    "kn-IN",
+    "ml-IN",
+    "mr-IN",
+    "pa-IN",
+    "od-IN",
 }
 
 # Per-API language coverage. Keys match what the agent might pass.
 LANGUAGES_BY_API: dict[str, list[dict[str, str]]] = {
-    "stt":           ALL_LANGUAGES,
-    "stt_translate": ALL_LANGUAGES,    # Saaras takes any input; output is always English.
-    "tts":           [lang for lang in ALL_LANGUAGES if lang["code"] in _TTS_CODES],
-    "translate":     ALL_LANGUAGES,    # sarvam-translate:v1 covers all; mayura:v1 only TTS subset.
+    "stt": ALL_LANGUAGES,
+    "stt_translate": ALL_LANGUAGES,  # Saaras takes any input; output is always English.
+    "tts": [lang for lang in ALL_LANGUAGES if lang["code"] in _TTS_CODES],
+    "translate": ALL_LANGUAGES,  # sarvam-translate:v1 covers all; mayura:v1 only TTS subset.
     "transliterate": ALL_LANGUAGES,
-    "lid":           [lang for lang in ALL_LANGUAGES if lang["code"] in _LID_CODES],
-    "llm":           ALL_LANGUAGES,
-    "vision":        ALL_LANGUAGES,
+    "lid": [lang for lang in ALL_LANGUAGES if lang["code"] in _LID_CODES],
+    "llm": ALL_LANGUAGES,
+    "vision": ALL_LANGUAGES,
 }
 
 
@@ -75,11 +93,44 @@ LANGUAGES_BY_API: dict[str, list[dict[str, str]]] = {
 # ---------------------------------------------------------------------------
 
 V3_SPEAKERS = [
-    "aditya", "ritu", "ashutosh", "priya", "neha", "rahul", "pooja", "rohan",
-    "simran", "kavya", "amit", "dev", "ishita", "shreya", "ratan", "varun",
-    "manan", "sumit", "roopa", "kabir", "aayan", "shubh", "advait", "anand",
-    "tanya", "tarun", "sunny", "mani", "gokul", "vijay", "shruti", "suhani",
-    "mohit", "kavitha", "rehan", "soham", "rupali", "niharika",
+    "aditya",
+    "ritu",
+    "ashutosh",
+    "priya",
+    "neha",
+    "rahul",
+    "pooja",
+    "rohan",
+    "simran",
+    "kavya",
+    "amit",
+    "dev",
+    "ishita",
+    "shreya",
+    "ratan",
+    "varun",
+    "manan",
+    "sumit",
+    "roopa",
+    "kabir",
+    "aayan",
+    "shubh",
+    "advait",
+    "anand",
+    "tanya",
+    "tarun",
+    "sunny",
+    "mani",
+    "gokul",
+    "vijay",
+    "shruti",
+    "suhani",
+    "mohit",
+    "kavitha",
+    "rehan",
+    "soham",
+    "rupali",
+    "niharika",
 ]
 
 SPEAKERS_BY_MODEL: dict[str, list[str]] = {
@@ -88,20 +139,20 @@ SPEAKERS_BY_MODEL: dict[str, list[str]] = {
 
 # Curated tone hints for the most-used voices, so agents can pick sensibly.
 SPEAKER_HINTS: dict[str, str] = {
-    "priya":    "warm friendly female (default), good for product / IVR",
-    "neha":     "warm female, conversational",
-    "pooja":    "warm female, friendly",
-    "shreya":   "calm female, news-anchor / narration",
-    "kavya":    "calm female, professional",
-    "ritu":     "calm female, professional",
-    "aditya":   "professional male, news-anchor",
-    "rahul":    "professional male, conversational",
-    "kabir":    "professional male, warm",
-    "vijay":    "mature male, authoritative",
-    "gokul":    "mature male, narration",
-    "anand":    "mature male, professional",
-    "tanya":    "young energetic female",
-    "suhani":   "young energetic female",
+    "priya": "warm friendly female (default), good for product / IVR",
+    "neha": "warm female, conversational",
+    "pooja": "warm female, friendly",
+    "shreya": "calm female, news-anchor / narration",
+    "kavya": "calm female, professional",
+    "ritu": "calm female, professional",
+    "aditya": "professional male, news-anchor",
+    "rahul": "professional male, conversational",
+    "kabir": "professional male, warm",
+    "vijay": "mature male, authoritative",
+    "gokul": "mature male, narration",
+    "anand": "mature male, professional",
+    "tanya": "young energetic female",
+    "suhani": "young energetic female",
     "niharika": "young energetic female",
 }
 
@@ -118,18 +169,18 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "content_type": "application/json",
         "auth_header": "api-subscription-key",
         "request_body": {
-            "inputs":               "list[str], required — texts to synthesize",
+            "inputs": "list[str], required — texts to synthesize",
             "target_language_code": "str, required — one of TTS-supported codes",
-            "speaker":              "str, required — must be compatible with chosen model",
-            "model":                "str — bulbul:v3 default",
-            "speech_sample_rate":   "int — 8000|16000|22050|24000|32000|44100|48000",
-            "pitch":                "float, -1.0 to 1.0 (default 0)",
-            "pace":                 "float, 0.3 to 3.0 (default 1)",
-            "loudness":             "float, 0.1 to 3.0 (default 1)",
+            "speaker": "str, required — must be compatible with chosen model",
+            "model": "str — bulbul:v3 default",
+            "speech_sample_rate": "int — 8000|16000|22050|24000|32000|44100|48000",
+            "pitch": "float, -1.0 to 1.0 (default 0)",
+            "pace": "float, 0.3 to 3.0 (default 1)",
+            "loudness": "float, 0.1 to 3.0 (default 1)",
             "enable_preprocessing": "bool — normalize numbers/dates/code-mix",
         },
         "response": {
-            "audios":     "list[str] — base64-encoded WAV per input",
+            "audios": "list[str] — base64-encoded WAV per input",
             "request_id": "str",
         },
         "notes": "Pick a speaker compatible with your model — see sarvam_code_speakers.",
@@ -140,19 +191,19 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "content_type": "multipart/form-data",
         "auth_header": "api-subscription-key",
         "request_body": {
-            "file":              "binary, required — audio (wav, mp3, ogg, flac, m4a, webm, aac, opus, amr, wma)",
-            "model":             "str — saaras:v3",
-            "mode":              "str — transcribe (default) | translate | verbatim | translit | codemix (saaras:v3 only)",
-            "language_code":     "str — BCP-47 or 'unknown' for auto-detect",
-            "with_timestamps":   "bool",
+            "file": "binary, required — audio (wav, mp3, ogg, flac, m4a, webm, aac, opus, amr, wma)",
+            "model": "str — saaras:v3",
+            "mode": "str — transcribe (default) | translate | verbatim | translit | codemix (saaras:v3 only)",
+            "language_code": "str — BCP-47 or 'unknown' for auto-detect",
+            "with_timestamps": "bool",
             "input_audio_codec": "str (optional) — pcm_s16le | pcm_l16 | pcm_raw (required for PCM files, 16kHz only)",
         },
         "response": {
-            "transcript":           "str",
-            "language_code":        "str — detected if input was 'unknown'",
+            "transcript": "str",
+            "language_code": "str — detected if input was 'unknown'",
             "language_probability": "float — confidence of detected language",
-            "diarized_transcript":  "list[turn] | null",
-            "timestamps":           "list[word_ts] | null",
+            "diarized_transcript": "list[turn] | null",
+            "timestamps": "list[word_ts] | null",
         },
         "notes": (
             "Saaras v3 is the recommended model. It supports 5 output modes via the `mode` parameter. "
@@ -165,13 +216,13 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "content_type": "multipart/form-data",
         "auth_header": "api-subscription-key",
         "request_body": {
-            "file":             "binary, required",
-            "model":            "str — saaras:v2.5",
+            "file": "binary, required",
+            "model": "str — saaras:v2.5",
             "with_diarization": "bool",
         },
         "response": {
-            "transcript":           "str — always English",
-            "language_code":        "str — detected source language",
+            "transcript": "str — always English",
+            "language_code": "str — detected source language",
         },
         "notes": "DEPRECATED. Migrate to /speech-to-text with model=saaras:v3 and mode=translate.",
     },
@@ -180,15 +231,15 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "model": "saaras:v3 (recommended)",
         "content_type": "application/json",
         "request_body": {
-            "model":           "str",
+            "model": "str",
             "with_timestamps": "bool",
-            "language_code":   "str (optional)",
+            "language_code": "str (optional)",
         },
         "response": {
-            "job_id":                  "str",
-            "input_storage_path":      "str — Azure Blob SAS URL (PUT audio here)",
-            "output_storage_path":     "str — Azure Blob SAS URL (poll for results)",
-            "storage_container_type":  "str — 'Azure'",
+            "job_id": "str",
+            "input_storage_path": "str — Azure Blob SAS URL (PUT audio here)",
+            "output_storage_path": "str — Azure Blob SAS URL (poll for results)",
+            "storage_container_type": "str — 'Azure'",
         },
         "notes": "Async batch flow: init -> upload to SAS -> poll /speech-to-text/job/status?job_id=...",
     },
@@ -197,35 +248,35 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "model": "mayura:v1 (11 langs, modes), sarvam-translate:v1 (22 langs)",
         "content_type": "application/json",
         "request_body": {
-            "input":                "str, required",
+            "input": "str, required",
             "source_language_code": "str — BCP-47 or 'auto' for auto-detect",
             "target_language_code": "str — BCP-47",
-            "model":                "str",
-            "mode":                 "str — formal | modern-colloquial | classic-colloquial | code-mixed (Mayura only)",
-            "output_script":        "str — roman | fully-native | spoken-form-in-native (Mayura only)",
-            "numerals_format":      "str — international | native",
-            "speaker_gender":       "str — Male | Female (gendered languages)",
+            "model": "str",
+            "mode": "str — formal | modern-colloquial | classic-colloquial | code-mixed (Mayura only)",
+            "output_script": "str — roman | fully-native | spoken-form-in-native (Mayura only)",
+            "numerals_format": "str — international | native",
+            "speaker_gender": "str — Male | Female (gendered languages)",
             "enable_preprocessing": "bool",
         },
         "response": {
-            "translated_text":      "str",
+            "translated_text": "str",
             "source_language_code": "str",
-            "request_id":           "str",
+            "request_id": "str",
         },
     },
     "/transliterate": {
         "method": "POST",
         "content_type": "application/json",
         "request_body": {
-            "input":                         "str",
-            "source_language_code":          "str",
-            "target_language_code":          "str",
-            "numerals_format":               "str",
-            "spoken_form":                   "bool",
+            "input": "str",
+            "source_language_code": "str",
+            "target_language_code": "str",
+            "numerals_format": "str",
+            "spoken_form": "bool",
             "spoken_form_numerals_language": "str (optional)",
         },
         "response": {
-            "transliterated_text":  "str",
+            "transliterated_text": "str",
             "source_language_code": "str",
         },
     },
@@ -243,7 +294,7 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "method": "POST",
         "content_type": "multipart/form-data",
         "request_body": {
-            "text":      "str (form field)",
+            "text": "str (form field)",
             "questions": 'JSON-stringified list of {id, text, type} where type is "boolean" | "enum" | "short answer" | "long answer" | "number". For "enum", also include "options".',
         },
         "response": {"answers": "list[answer]"},
@@ -251,18 +302,21 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
     },
     "/v1/chat/completions": {
         "method": "POST",
-        "model": "sarvam-30b (recommended), sarvam-105b (flagship)",
+        "model": "sarvam-105b (recommended), sarvam-30b (deprecated)",
         "content_type": "application/json",
         "request_body": {
-            "model":       "str — one of: sarvam-30b | sarvam-105b",
-            "messages":    "list[{role, content}]",
+            "model": "str — one of: sarvam-105b | sarvam-30b",
+            "messages": "list[{role, content}]",
             "temperature": "float, 0.0 to 2.0",
-            "top_p":       "float, 0.0 to 1.0",
-            "max_tokens":  "int (optional)",
-            "stream":      "bool",
+            "top_p": "float, 0.0 to 1.0",
+            "max_tokens": "int (recommended; default 1024 in MCP tools)",
+            "stream": "bool",
         },
         "response_oai_compatible": True,
-        "notes": "OpenAI-compatible. sarvam-30b is the recommended default; sarvam-105b is flagship.",
+        "notes": (
+            "OpenAI-compatible. Prefer sarvam-105b for new chat/coding/agent work; "
+            "sarvam-30b is deprecated for new integrations."
+        ),
     },
     "/doc-digitization/job/v1": {
         "method": "POST",
@@ -270,13 +324,13 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         "content_type": "application/json",
         "request_body": {
             "job_parameters": "object — {language: BCP-47 code, output_format: 'md'|'html'|'json'}",
-            "callback":       "object (optional) — {url: str, auth_token: str} for webhook",
+            "callback": "object (optional) — {url: str, auth_token: str} for webhook",
         },
         "response": {
-            "job_id":                  "str (UUID)",
-            "storage_container_type":  "str",
-            "job_parameters":          "object",
-            "job_state":               "str — Accepted",
+            "job_id": "str (UUID)",
+            "storage_container_type": "str",
+            "job_parameters": "object",
+            "job_state": "str — Accepted",
         },
         "notes": (
             "Job-based async pipeline: create job → get upload URLs "
@@ -294,7 +348,7 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
         },
         "response": {
             "dictionary_count": "int",
-            "dictionaries":     "list[str] — dictionary IDs",
+            "dictionaries": "list[str] — dictionary IDs",
         },
         "notes": "CRUD for pronunciation dictionaries. Also supports GET /{id}, PUT /{id}, DELETE /{id}.",
     },
@@ -308,15 +362,15 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
 # ---------------------------------------------------------------------------
 
 PRICING: dict[str, dict[str, Any]] = {
-    "saaras:v3":            {"unit": "per minute of audio",   "tier": "billed by minute (recommended)"},
-    "saaras:v3-realtime":   {"unit": "per minute of audio",   "tier": "billed by minute"},
-    "saaras:v2.5":          {"unit": "per minute of audio",   "tier": "billed by minute (legacy, deprecated soon)"},
-    "bulbul:v3":            {"unit": "per character",         "tier": "billed by character"},
-    "mayura:v1":            {"unit": "per character",         "tier": "billed by character"},
-    "sarvam-translate:v1":  {"unit": "per character",         "tier": "billed by character"},
-    "sarvam-30b":           {"unit": "per 1M tokens",         "tier": "billed by tokens (recommended)"},
-    "sarvam-105b":          {"unit": "per 1M tokens",         "tier": "billed by tokens (flagship)"},
-    "sarvam-vision":        {"unit": "per page",              "tier": "billed by page"},
+    "saaras:v3": {"unit": "per minute of audio", "tier": "billed by minute (recommended)"},
+    "saaras:v3-realtime": {"unit": "per minute of audio", "tier": "billed by minute"},
+    "saaras:v2.5": {"unit": "per minute of audio", "tier": "billed by minute (legacy, deprecated soon)"},
+    "bulbul:v3": {"unit": "per character", "tier": "billed by character"},
+    "mayura:v1": {"unit": "per character", "tier": "billed by character"},
+    "sarvam-translate:v1": {"unit": "per character", "tier": "billed by character"},
+    "sarvam-105b": {"unit": "per 1M tokens", "tier": "billed by tokens (recommended)"},
+    "sarvam-30b": {"unit": "per 1M tokens", "tier": "billed by tokens (deprecated)"},
+    "sarvam-vision": {"unit": "per page", "tier": "billed by page"},
 }
 
 PRICING_DISCLAIMER = (

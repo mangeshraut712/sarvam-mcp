@@ -193,13 +193,13 @@ curl -sS https://api.sarvam.ai/translate \\
 PY_LLM = '''\
 """Chat with Sarvam LLMs (OpenAI-compatible).
 
-Accepted model ids: sarvam-30b (balanced default), sarvam-105b (flagship).
+Accepted model ids: sarvam-105b (recommended), sarvam-30b (deprecated).
 """
 import os, httpx
 
 API_KEY = os.environ["SARVAM_API_KEY"]
-# sarvam-30b | sarvam-105b
-MODEL = "sarvam-30b"
+# Prefer sarvam-105b for new chat/coding/agent work.
+MODEL = "sarvam-105b"
 
 resp = httpx.post(
     "https://api.sarvam.ai/v1/chat/completions",
@@ -211,7 +211,7 @@ resp = httpx.post(
             {"role": "user",   "content": "Translate 'good morning' into Tamil and Marathi."},
         ],
         "temperature": 0.3,
-        "max_tokens": 200,
+        "max_tokens": 1024,
     },
     timeout=60.0,
 )
@@ -220,9 +220,9 @@ print(resp.json()["choices"][0]["message"]["content"])
 '''
 
 JS_LLM = '''\
-// Accepted model ids: sarvam-30b (balanced default), sarvam-105b (flagship).
+// Accepted model ids: sarvam-105b (recommended), sarvam-30b (deprecated).
 const API_KEY = process.env.SARVAM_API_KEY;
-const MODEL = "sarvam-30b";
+const MODEL = "sarvam-105b";
 const resp = await fetch("https://api.sarvam.ai/v1/chat/completions", {
   method: "POST",
   headers: {
@@ -236,7 +236,7 @@ const resp = await fetch("https://api.sarvam.ai/v1/chat/completions", {
       { role: "user",   content: "Translate 'good morning' into Tamil and Marathi." },
     ],
     temperature: 0.3,
-    max_tokens: 200,
+    max_tokens: 1024,
   }),
 });
 const data = await resp.json();
@@ -244,17 +244,16 @@ console.log(data.choices[0].message.content);
 '''
 
 CURL_LLM = '''\
-# Accepted model ids: sarvam-30b (balanced default), sarvam-105b (flagship).
-# Example below uses sarvam-30b; change the "model" field to sarvam-105b if needed.
+# Accepted model ids: sarvam-105b (recommended), sarvam-30b (deprecated).
 curl -sS https://api.sarvam.ai/v1/chat/completions \\
   -H "api-subscription-key: $SARVAM_API_KEY" \\
   -H "content-type: application/json" \\
   -d '{
-    "model": "sarvam-30b",
+    "model": "sarvam-105b",
     "messages": [
       {"role": "user", "content": "Translate good morning to Tamil"}
     ],
-    "max_tokens": 100
+    "max_tokens": 1024
   }' | jq -r '.choices[0].message.content'
 '''
 
@@ -262,20 +261,20 @@ curl -sS https://api.sarvam.ai/v1/chat/completions \\
 
 
 SNIPPETS: dict[tuple[str, str], str] = {
-    ("tts", "python"):           PY_TTS,
-    ("tts", "javascript"):       JS_TTS,
-    ("tts", "typescript"):       JS_TTS,   # same modern Node code works
-    ("tts", "curl"):             CURL_TTS,
-    ("stt", "python"):           PY_STT,
-    ("stt", "javascript"):       JS_STT,
-    ("stt", "typescript"):       JS_STT,
-    ("stt", "curl"):             CURL_STT,
-    ("translate", "python"):     PY_TRANSLATE,
+    ("tts", "python"): PY_TTS,
+    ("tts", "javascript"): JS_TTS,
+    ("tts", "typescript"): JS_TTS,  # same modern Node code works
+    ("tts", "curl"): CURL_TTS,
+    ("stt", "python"): PY_STT,
+    ("stt", "javascript"): JS_STT,
+    ("stt", "typescript"): JS_STT,
+    ("stt", "curl"): CURL_STT,
+    ("translate", "python"): PY_TRANSLATE,
     ("translate", "javascript"): JS_TRANSLATE,
     ("translate", "typescript"): JS_TRANSLATE,
-    ("translate", "curl"):       CURL_TRANSLATE,
-    ("llm", "python"):           PY_LLM,
-    ("llm", "javascript"):       JS_LLM,
-    ("llm", "typescript"):       JS_LLM,
-    ("llm", "curl"):             CURL_LLM,
+    ("translate", "curl"): CURL_TRANSLATE,
+    ("llm", "python"): PY_LLM,
+    ("llm", "javascript"): JS_LLM,
+    ("llm", "typescript"): JS_LLM,
+    ("llm", "curl"): CURL_LLM,
 }

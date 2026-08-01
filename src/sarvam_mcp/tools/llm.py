@@ -22,27 +22,35 @@ def register(mcp: FastMCP) -> None:
             "Runtime tool — calls Sarvam API now. For code-writing help, use sarvam_code_* tools.\n\n"
             "Generate chat completions with Sarvam's Indic-tuned LLMs.\n\n"
             "Models:\n"
-            "  • `sarvam-30b` (default) — MoE, 2.4B active, balanced quality + cost\n"
-            "  • `sarvam-105b` — MoE flagship, best reasoning + tool use\n\n"
+            "  • `sarvam-105b` (default) — MoE flagship, best reasoning + tool use + coding\n"
+            "  • `sarvam-30b` (deprecated) — kept for compatibility; prefer 105b for new work\n\n"
             "Both support 23 Indic languages with native, romanized, and "
-            "code-mixed styles. OpenAI-compatible message format."
+            "code-mixed styles. OpenAI-compatible message format. "
+            "A default max_tokens budget is always sent so reasoning does not "
+            "consume the whole response and leave content empty."
         ),
     )
     async def sarvam_llm_complete(
         ctx: Context,
         messages: list[dict[str, Any]] = Field(
             description=(
-                "OpenAI-style messages: [{'role': 'system'|'user'|'assistant', "
-                "'content': '...'}, ...]"
+                "OpenAI-style messages: [{'role': 'system'|'user'|'assistant', 'content': '...'}, ...]"
             ),
         ),
         model: SarvamLLM = Field(
-            default="sarvam-30b",
-            description="`sarvam-30b` (default) or `sarvam-105b` (flagship).",
+            default="sarvam-105b",
+            description="`sarvam-105b` (default/flagship) or `sarvam-30b` (deprecated).",
         ),
         temperature: float = Field(default=0.7, ge=0.0, le=2.0),
         top_p: float = Field(default=1.0, ge=0.0, le=1.0),
-        max_tokens: int | None = Field(default=None, ge=1),
+        max_tokens: int | None = Field(
+            default=1024,
+            ge=1,
+            description=(
+                "Max completion tokens. Defaults to 1024 so reasoning models do not "
+                "return empty content when the budget is exhausted."
+            ),
+        ),
         stream: bool = Field(
             default=False,
             description="Streaming via MCP isn't useful for chat — keep False unless testing.",
@@ -55,9 +63,8 @@ def register(mcp: FastMCP) -> None:
             "temperature": temperature,
             "top_p": top_p,
             "stream": stream,
+            "max_tokens": max_tokens if max_tokens is not None else 1024,
         }
-        if max_tokens is not None:
-            body["max_tokens"] = max_tokens
 
         with measure_tool() as metrics:
             payload, call = await sc.client.post_json(CHAT_PATH, json_body=body)

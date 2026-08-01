@@ -42,6 +42,25 @@ def test_recommend_picks_105b_for_reasoning_signal():
     assert result["recommended_model"] == "sarvam-105b"
 
 
+def test_recommend_picks_105b_for_default_chatbot():
+    result = _recommend("build a chatbot that replies in Hindi")
+    assert result["matched"]
+    assert result["recommended_model"] == "sarvam-105b"
+    assert result["endpoint"] == "/v1/chat/completions"
+
+
+def test_recommend_picks_105b_for_coding_agent():
+    result = _recommend("write a coding agent with tool use")
+    assert result["matched"]
+    assert result["recommended_model"] == "sarvam-105b"
+
+
+def test_recommend_picks_30b_for_low_latency_chat():
+    result = _recommend("low-latency realtime chatbot for IVR")
+    assert result["matched"]
+    assert result["recommended_model"] == "sarvam-30b"
+
+
 def test_recommend_returns_unmatched_for_unrelated():
     result = _recommend("sort my photos by date")
     assert result["matched"] is False
@@ -112,7 +131,7 @@ def test_validate_clean_request_returns_no_errors():
     issues = _validate(
         "/v1/chat/completions",
         {
-            "model": "sarvam-30b",
+            "model": "sarvam-105b",
             "messages": [{"role": "user", "content": "hi"}],
             "temperature": 0.5,
         },
