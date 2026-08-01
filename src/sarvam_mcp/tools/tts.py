@@ -19,6 +19,41 @@ TTS_STREAM_PATH = "/text-to-speech/stream"  # documented WebSocket path
 SampleRate = Literal[8000, 16000, 22050, 24000, 32000, 44100, 48000]
 TtsModel = Literal["bulbul:v3"]
 
+def _speak_body(
+    *,
+    text: str,
+    target_language_code: str,
+    speaker: str,
+    speech_sample_rate: int,
+    model: str,
+    pace: float = 1.0,
+    pitch: float | None = None,
+    loudness: float | None = None,
+    enable_preprocessing: bool | None = None,
+) -> dict[str, Any]:
+    """Build a /text-to-speech JSON body matching the official SDK.
+
+    Uses `text` (not legacy `inputs`). Omits bulbul:v3-unsupported controls.
+    """
+    body: dict[str, Any] = {
+        "text": text,
+        "target_language_code": target_language_code,
+        "speaker": speaker,
+        "speech_sample_rate": speech_sample_rate,
+        "pace": pace,
+        "model": model,
+    }
+    if model != "bulbul:v3":
+        if pitch is not None:
+            body["pitch"] = pitch
+        if loudness is not None:
+            body["loudness"] = loudness
+        if enable_preprocessing is not None:
+            body["enable_preprocessing"] = enable_preprocessing
+    return body
+
+
+
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
@@ -48,12 +83,27 @@ def register(mcp: FastMCP) -> None:
         speech_sample_rate: SampleRate = Field(
             default=24000, description="PCM sample rate of the output WAV."
         ),
-        pitch: float = Field(default=0.0, ge=-1.0, le=1.0),
-        pace: float = Field(default=1.0, ge=0.3, le=3.0),
-        loudness: float = Field(default=1.0, ge=0.1, le=3.0),
+        pitch: float = Field(
+            default=0.0,
+            ge=-1.0,
+            le=1.0,
+            description="bulbul:v2 only — omitted for bulbul:v3.",
+        ),
+        pace: float = Field(
+            default=1.0,
+            ge=0.5,
+            le=2.0,
+            description="Speech rate. bulbul:v3 range is 0.5–2.0.",
+        ),
+        loudness: float = Field(
+            default=1.0,
+            ge=0.1,
+            le=3.0,
+            description="bulbul:v2 only — omitted for bulbul:v3.",
+        ),
         enable_preprocessing: bool = Field(
             default=True,
-            description="Normalize numbers/dates/code-mixed segments before synthesis.",
+            description="bulbul:v2 only — omitted for bulbul:v3 (v3 preprocesses automatically).",
         ),
         model: TtsModel = Field(
             default="bulbul:v3",
@@ -61,17 +111,17 @@ def register(mcp: FastMCP) -> None:
         ),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)
-        body: dict[str, Any] = {
-            "inputs": [text],
-            "target_language_code": target_language_code,
-            "speaker": speaker,
-            "speech_sample_rate": speech_sample_rate,
-            "pitch": pitch,
-            "pace": pace,
-            "loudness": loudness,
-            "enable_preprocessing": enable_preprocessing,
-            "model": model,
-        }
+        body = _speak_body(
+            text=text,
+            target_language_code=target_language_code,
+            speaker=speaker,
+            speech_sample_rate=speech_sample_rate,
+            model=model,
+            pace=pace,
+            pitch=pitch,
+            loudness=loudness,
+            enable_preprocessing=enable_preprocessing,
+        )
 
         with measure_tool() as metrics:
             payload, call = await sc.client.post_json(TTS_PATH, json_body=body)
@@ -149,7 +199,7 @@ def register(mcp: FastMCP) -> None:
                 rest_resp = await sc.client.post_json(
                     TTS_PATH,
                     json_body={
-                        "inputs": [text],
+                        "text": text,
                         "target_language_code": target_language_code,
                         "speaker": speaker,
                         "speech_sample_rate": speech_sample_rate,

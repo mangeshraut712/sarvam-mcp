@@ -312,8 +312,20 @@ def _validate(endpoint: str, body: dict[str, Any]) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
 
     if endpoint == "/text-to-speech":
-        if "inputs" not in body or not isinstance(body.get("inputs"), list):
-            issues.append(_err("inputs", "Required: list of strings to synthesize."))
+        # Official SDKs send `text: str`. Legacy docs/snippets used `inputs: list[str]`.
+        has_text = isinstance(body.get("text"), str) and bool(body.get("text"))
+        has_inputs = isinstance(body.get("inputs"), list) and bool(body.get("inputs"))
+        if not has_text and not has_inputs:
+            issues.append(_err(
+                "text",
+                "Required: string `text` (preferred) or legacy list `inputs`.",
+                'Send {"text": "...", "target_language_code": "hi-IN", "model": "bulbul:v3"}.',
+            ))
+        elif has_text and has_inputs:
+            issues.append(_warn(
+                "inputs",
+                "Both `text` and `inputs` present; prefer `text` (SDK field) and drop `inputs`.",
+            ))
         if not body.get("target_language_code"):
             issues.append(_err("target_language_code", "Required."))
         elif body["target_language_code"] not in _TTS_LANG_CODES:
@@ -337,6 +349,22 @@ def _validate(endpoint: str, body: dict[str, Any]) -> list[dict[str, Any]]:
             8000, 16000, 22050, 24000, 32000, 44100, 48000
         ):
             issues.append(_err("speech_sample_rate", "Invalid sample rate."))
+        # bulbul:v3 ignores these v2-only / unsupported controls — warn so agents stop sending them.
+        if model == "bulbul:v3":
+            for field in ("pitch", "loudness", "enable_preprocessing"):
+                if field in body:
+                    issues.append(_warn(
+                        field,
+                        f"`{field}` is not supported by bulbul:v3.",
+                        "Omit it for v3 (pitch/loudness were v2-only; v3 preprocesses automatically).",
+                    ))
+            pace = body.get("pace")
+            if isinstance(pace, (int, float)) and not (0.5 <= float(pace) <= 2.0):
+                issues.append(_err(
+                    "pace",
+                    f"bulbul:v3 pace must be between 0.5 and 2.0 (got {pace}).",
+                    "Clamp pace to [0.5, 2.0] for bulbul:v3.",
+                ))
 
     elif endpoint == "/speech-to-text":
         if not body.get("file") and "file" not in body:

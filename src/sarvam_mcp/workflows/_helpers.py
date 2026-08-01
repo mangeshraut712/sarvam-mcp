@@ -97,12 +97,11 @@ async def tts_synthesize(
     body, call = await sc.client.post_json(
         "/text-to-speech",
         json_body={
-            "inputs": [text],
+            "text": text,
             "target_language_code": target_language_code,
             "speaker": speaker,
             "speech_sample_rate": speech_sample_rate,
             "model": model,
-            "enable_preprocessing": True,
         },
     )
     if metrics is not None:

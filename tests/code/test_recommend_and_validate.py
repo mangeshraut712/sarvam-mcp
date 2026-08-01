@@ -118,3 +118,56 @@ def test_validate_clean_request_returns_no_errors():
         },
     )
     assert not [i for i in issues if i["severity"] == "error"]
+
+
+def test_validate_tts_accepts_sdk_text_field():
+    issues = _validate(
+        "/text-to-speech",
+        {
+            "text": "नमस्ते",
+            "target_language_code": "hi-IN",
+            "model": "bulbul:v3",
+            "speaker": "priya",
+        },
+    )
+    assert not [i for i in issues if i["severity"] == "error"]
+
+
+def test_validate_tts_still_accepts_legacy_inputs():
+    issues = _validate(
+        "/text-to-speech",
+        {
+            "inputs": ["hi"],
+            "target_language_code": "hi-IN",
+            "model": "bulbul:v3",
+            "speaker": "priya",
+        },
+    )
+    assert not [i for i in issues if i["severity"] == "error"]
+
+
+def test_validate_tts_requires_text_or_inputs():
+    issues = _validate(
+        "/text-to-speech",
+        {"target_language_code": "hi-IN", "model": "bulbul:v3"},
+    )
+    assert any(i["field"] == "text" and i["severity"] == "error" for i in issues)
+
+
+def test_validate_tts_v3_warns_on_unsupported_controls():
+    issues = _validate(
+        "/text-to-speech",
+        {
+            "text": "hi",
+            "target_language_code": "hi-IN",
+            "model": "bulbul:v3",
+            "speaker": "priya",
+            "pitch": 0.2,
+            "loudness": 1.2,
+            "enable_preprocessing": True,
+            "pace": 2.5,
+        },
+    )
+    warned = {i["field"] for i in issues if i["severity"] == "warning"}
+    assert {"pitch", "loudness", "enable_preprocessing"} <= warned
+    assert any(i["field"] == "pace" and i["severity"] == "error" for i in issues)
