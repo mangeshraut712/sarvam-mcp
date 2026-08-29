@@ -66,8 +66,8 @@ def register(mcp: FastMCP) -> None:
         ),
         speaker: BulbulSpeaker = Field(default="priya"),
         llm_model: SarvamLLM = Field(
-            default="sarvam-30b",
-            description="`sarvam-30b` (default) or `sarvam-105b` (flagship).",
+            default="sarvam-105b",
+            description="`sarvam-105b` (default), `sarvam-105b-conversations`, or deprecated `sarvam-30b`.",
         ),
     ) -> dict[str, Any]:
         sc = await ready_ctx(ctx)

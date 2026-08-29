@@ -251,10 +251,10 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
     },
     "/v1/chat/completions": {
         "method": "POST",
-        "model": "sarvam-30b (recommended), sarvam-105b (flagship)",
+        "model": "sarvam-105b (default), sarvam-105b-conversations",
         "content_type": "application/json",
         "request_body": {
-            "model":       "str — one of: sarvam-30b | sarvam-105b",
+            "model":       "str — one of: sarvam-105b | sarvam-105b-conversations | sarvam-30b (deprecated)",
             "messages":    "list[{role, content}]",
             "temperature": "float, 0.0 to 2.0",
             "top_p":       "float, 0.0 to 1.0",
@@ -262,7 +262,7 @@ API_REFERENCE: dict[str, dict[str, Any]] = {
             "stream":      "bool",
         },
         "response_oai_compatible": True,
-        "notes": "OpenAI-compatible. sarvam-30b is the recommended default; sarvam-105b is flagship.",
+        "notes": "OpenAI-compatible. sarvam-105b is the current default; sarvam-30b is deprecated and rejected live.",
     },
     "/doc-digitization/job/v1": {
         "method": "POST",
@@ -314,8 +314,9 @@ PRICING: dict[str, dict[str, Any]] = {
     "bulbul:v3":            {"unit": "per character",         "tier": "billed by character"},
     "mayura:v1":            {"unit": "per character",         "tier": "billed by character"},
     "sarvam-translate:v1":  {"unit": "per character",         "tier": "billed by character"},
-    "sarvam-30b":           {"unit": "per 1M tokens",         "tier": "billed by tokens (recommended)"},
-    "sarvam-105b":          {"unit": "per 1M tokens",         "tier": "billed by tokens (flagship)"},
+    "sarvam-30b":           {"unit": "per 1M tokens",         "tier": "billed by tokens (deprecated)"},
+    "sarvam-105b":          {"unit": "per 1M tokens",         "tier": "billed by tokens (recommended)"},
+    "sarvam-105b-conversations": {"unit": "per 1M tokens",   "tier": "billed by tokens"},
     "sarvam-vision":        {"unit": "per page",              "tier": "billed by page"},
 }
 

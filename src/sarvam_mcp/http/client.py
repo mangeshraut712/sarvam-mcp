@@ -21,6 +21,7 @@ from sarvam_mcp.http.errors import (
     SarvamAuthError,
     SarvamBadRequestError,
     SarvamConnectionError,
+    SarvamCreditsError,
     SarvamRateLimitError,
 )
 from sarvam_mcp.http.retry import retry_async
@@ -230,6 +231,11 @@ class SarvamClient:
         )
         if response.status_code in (401, 403):
             raise SarvamAuthError(message, **kwargs)
+        if response.status_code == 402:
+            raise SarvamCreditsError(
+                f"{message} Add credits at https://dashboard.sarvam.ai → Billing.",
+                **kwargs,
+            )
         if response.status_code == 400:
             raise SarvamBadRequestError(message, **kwargs)
         if response.status_code == 429:

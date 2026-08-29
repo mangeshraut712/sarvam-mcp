@@ -1,8 +1,8 @@
 {
   "name": "sarvam-mcp",
   "user": "ubuntu",
-  "install": ".cursor/install.sh",
-  "start": ".cursor/start.sh",
+  "install": "bash -lc 'if [ -f .cursor/install.sh ]; then bash .cursor/install.sh; else echo \"[sarvam-mcp] skip install: .cursor/install.sh is not on this git ref. Merge the env-setup PR into main so recurring Cloud Agent builds succeed.\"; fi'",
+  "start": "bash -lc 'if [ -f .cursor/start.sh ]; then bash .cursor/start.sh; else echo \"[sarvam-mcp] skip start: .cursor/start.sh is not on this git ref.\"; fi'",
   "terminals": [
     {
       "name": "mcp-inspector",

@@ -11,6 +11,7 @@ from sarvam_mcp.http import (
     SarvamAuthError,
     SarvamClient,
     SarvamConnectionError,
+    SarvamCreditsError,
     SarvamRateLimitError,
 )
 from sarvam_mcp.http.errors import SarvamBadRequestError
@@ -65,6 +66,19 @@ async def test_401_maps_to_auth_error(client, httpx_mock):
     with pytest.raises(SarvamAuthError) as exc_info:
         await client.post_json("/translate", json_body={"input": "x"})
     assert exc_info.value.status_code == 401
+
+
+async def test_402_maps_to_credits_error(client, httpx_mock):
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.sarvam.ai/translate",
+        status_code=402,
+        json={"error": "No credits available."},
+    )
+    with pytest.raises(SarvamCreditsError) as exc_info:
+        await client.post_json("/translate", json_body={"input": "x"})
+    assert exc_info.value.status_code == 402
+    assert "dashboard.sarvam.ai" in str(exc_info.value)
 
 
 async def test_429_maps_to_rate_limit_with_retry_after(client, httpx_mock):

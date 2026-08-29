@@ -224,9 +224,9 @@ def _recommend(task: str) -> dict[str, Any]:
                 snippet_key=("llm", "python"),
             )
         return _result(
-            model="sarvam-30b",
+            model="sarvam-105b",
             endpoint="/v1/chat/completions",
-            why="Sarvam-30B — balanced quality + cost, recommended default for chat/agents in Indic languages.",
+            why="Sarvam-105B — current default chat model for Indic languages (sarvam-30b is deprecated).",
             language_code=detected_lang,
             snippet_key=("llm", "python"),
         )
@@ -291,7 +291,7 @@ def _result(
 # ---- request validation ---------------------------------------------------
 
 _VALID_TTS_MODELS = {"bulbul:v3"}
-_VALID_LLM_MODELS = {"sarvam-30b", "sarvam-105b"}
+_VALID_LLM_MODELS = {"sarvam-105b", "sarvam-105b-conversations", "sarvam-30b"}
 _VALID_TRANSLATE_MODELS = {"mayura:v1", "sarvam-translate:v1"}
 _VALID_STT_MODELS = {"saaras:v3"}
 _VALID_STT_MODES = {"transcribe", "translate", "verbatim", "translit", "codemix"}
@@ -378,10 +378,16 @@ def _validate(endpoint: str, body: dict[str, Any]) -> list[dict[str, Any]]:
     elif endpoint == "/v1/chat/completions":
         if not body.get("messages"):
             issues.append(_err("messages", "Required."))
-        model = body.get("model", "sarvam-30b")
+        model = body.get("model", "sarvam-105b")
         if model not in _VALID_LLM_MODELS:
             issues.append(_err("model", f"'{model}' invalid.",
                                f"Valid: {sorted(_VALID_LLM_MODELS)}"))
+        elif model == "sarvam-30b":
+            issues.append(_warn(
+                "model",
+                "sarvam-30b is deprecated; the live API rejects this id.",
+                "Use sarvam-105b or sarvam-105b-conversations.",
+            ))
         t = body.get("temperature")
         if t is not None and not (0.0 <= t <= 2.0):
             issues.append(_err("temperature", "Must be between 0.0 and 2.0."))

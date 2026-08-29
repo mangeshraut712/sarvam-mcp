@@ -32,6 +32,10 @@ class SarvamRateLimitError(SarvamAPIError):
         self.retry_after = retry_after
 
 
+class SarvamCreditsError(SarvamAPIError):
+    """402 — API key is valid but the account has no remaining credits."""
+
+
 class SarvamBadRequestError(SarvamAPIError):
     """400 — caller-side validation problem."""
 

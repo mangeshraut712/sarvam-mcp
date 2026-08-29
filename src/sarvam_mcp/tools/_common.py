@@ -152,7 +152,7 @@ BulbulSpeaker = Literal[
 ]
 
 # Chat completions — same IDs as ``sarvam_tools_llm_complete``.
-SarvamLLM = Literal["sarvam-30b", "sarvam-105b"]
+SarvamLLM = Literal["sarvam-105b", "sarvam-105b-conversations", "sarvam-30b"]
 
 
 # ---- Translate-mode + script enums ---------------------------------------

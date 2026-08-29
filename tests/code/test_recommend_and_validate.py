@@ -36,6 +36,12 @@ def test_recommend_picks_sarvam_translate_for_22_langs():
     assert result["recommended_model"] == "sarvam-translate:v1"
 
 
+def test_recommend_picks_105b_for_chat():
+    result = _recommend("build a chatbot that replies in Hindi")
+    assert result["matched"]
+    assert result["recommended_model"] == "sarvam-105b"
+
+
 def test_recommend_picks_105b_for_reasoning_signal():
     result = _recommend("build a complex reasoning agent that uses tool use")
     assert result["matched"]
@@ -118,3 +124,4 @@ def test_validate_clean_request_returns_no_errors():
         },
     )
     assert not [i for i in issues if i["severity"] == "error"]
+    assert any(i["severity"] == "warning" and i["field"] == "model" for i in issues)
