@@ -39,6 +39,10 @@ function demoEnabled(): boolean {
   return process.env.VAANI_DEMO !== "0";
 }
 
+function missingKey(): boolean {
+  return !process.env.SARVAM_API_KEY;
+}
+
 function withDemo(result: Omit<VaaniResult, "ok" | "demo" | "demo_banner">): VaaniResult {
   return {
     ...result,
@@ -62,6 +66,15 @@ export async function runTranslate(input: {
   targetLanguage: string;
 }): Promise<VaaniResult> {
   const t0 = Date.now();
+  if (missingKey() && demoEnabled()) {
+    return withDemo({
+      action: "translate_content",
+      text: demoTranslate(input.targetLanguage),
+      target_language_code: input.targetLanguage,
+      source_language_code: "en-IN",
+      latency_ms: 0,
+    });
+  }
   try {
     const src = await lid(input.text);
     const body = await sarvamPostJson<{ translated_text?: string }>(
@@ -84,7 +97,11 @@ export async function runTranslate(input: {
       latency_ms: Date.now() - t0,
     };
   } catch (err) {
-    if (err instanceof SarvamHttpError && err.status === 402 && demoEnabled()) {
+    if (
+      err instanceof SarvamHttpError &&
+      demoEnabled() &&
+      (err.status === 402 || err.status === 503)
+    ) {
       return withDemo({
         action: "translate_content",
         text: demoTranslate(input.targetLanguage),
@@ -103,6 +120,17 @@ async function runLlm(input: {
   language: string;
 }): Promise<VaaniResult> {
   const t0 = Date.now();
+  if (missingKey() && demoEnabled()) {
+    return withDemo({
+      action: input.action,
+      text:
+        input.action === "explain_content"
+          ? demoExplain(input.language)
+          : demoSummary(input.language),
+      target_language_code: input.language,
+      latency_ms: 0,
+    });
+  }
   const mode =
     input.action === "explain_content"
       ? "Explain the content clearly in 2-4 sentences."
@@ -135,7 +163,11 @@ async function runLlm(input: {
       latency_ms: Date.now() - t0,
     };
   } catch (err) {
-    if (err instanceof SarvamHttpError && err.status === 402 && demoEnabled()) {
+    if (
+      err instanceof SarvamHttpError &&
+      demoEnabled() &&
+      (err.status === 402 || err.status === 503)
+    ) {
       return withDemo({
         action: input.action,
         text:
@@ -170,6 +202,15 @@ export async function runSpeak(input: {
 }): Promise<VaaniResult> {
   const t0 = Date.now();
   const lang = coerceTtsLanguage(input.language);
+  if (missingKey() && demoEnabled()) {
+    return withDemo({
+      action: "speak_content",
+      text: input.text,
+      target_language_code: lang,
+      latency_ms: 0,
+      error: "Demo mode: live TTS needs an API key and credits.",
+    });
+  }
   try {
     const body = await sarvamPostJson<{ audios?: string[] }>(
       "/text-to-speech",
@@ -196,7 +237,11 @@ export async function runSpeak(input: {
       latency_ms: Date.now() - t0,
     };
   } catch (err) {
-    if (err instanceof SarvamHttpError && err.status === 402 && demoEnabled()) {
+    if (
+      err instanceof SarvamHttpError &&
+      demoEnabled() &&
+      (err.status === 402 || err.status === 503)
+    ) {
       return withDemo({
         action: "speak_content",
         text: input.text,
@@ -214,6 +259,16 @@ export async function runUnderstandAudio(
   filename: string,
 ): Promise<VaaniResult> {
   const t0 = Date.now();
+  if (missingKey() && demoEnabled()) {
+    const demo = demoTranscript();
+    return withDemo({
+      action: "understand_audio",
+      transcript: demo.transcript,
+      detected_language: demo.language,
+      text: demo.transcript,
+      latency_ms: 0,
+    });
+  }
   try {
     const form = new FormData();
     const blob = new Blob([new Uint8Array(bytes)], {
@@ -245,7 +300,11 @@ export async function runUnderstandAudio(
       latency_ms: Date.now() - t0,
     };
   } catch (err) {
-    if (err instanceof SarvamHttpError && err.status === 402 && demoEnabled()) {
+    if (
+      err instanceof SarvamHttpError &&
+      demoEnabled() &&
+      (err.status === 402 || err.status === 503)
+    ) {
       const demo = demoTranscript();
       return withDemo({
         action: "understand_audio",
