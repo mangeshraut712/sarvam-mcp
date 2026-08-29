@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from sarvam_mcp.audio import StoredAudio
+from sarvam_mcp.http.errors import SarvamCreditsError
 from sarvam_mcp.playground.pipeline import run_pipeline
 from sarvam_mcp.workflows._helpers import coerce_tts_language
 
@@ -82,5 +83,29 @@ async def test_run_pipeline_empty_transcript(tmp_path: Path) -> None:
 
     assert result["ok"] is False
     assert "empty transcript" in result["error"].lower()
+    assert result["steps"][0]["name"] == "STT"
+    assert result["steps"][0]["status"] == "error"
+
+
+async def test_run_pipeline_maps_credits_error(tmp_path: Path) -> None:
+    audio = tmp_path / "clip.webm"
+    audio.write_bytes(b"audio")
+
+    with (
+        patch("sarvam_mcp.playground.pipeline.build_playground_context") as mock_ctx,
+        patch("sarvam_mcp.playground.pipeline.stt_transcribe", new_callable=AsyncMock) as mock_stt,
+    ):
+        sc = AsyncMock()
+        sc.client.aclose = AsyncMock()
+        mock_ctx.return_value = sc
+        mock_stt.side_effect = SarvamCreditsError(
+            "No credits available. Add credits at https://dashboard.sarvam.ai → Billing.",
+            status_code=402,
+        )
+
+        result = await run_pipeline(audio)
+
+    assert result["ok"] is False
+    assert "credits" in result["error"].lower()
     assert result["steps"][0]["name"] == "STT"
     assert result["steps"][0]["status"] == "error"

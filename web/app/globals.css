@@ -145,6 +145,13 @@ body {
   margin-top: -8px;
 }
 
+.hint {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+}
+
 .record-btn {
   width: 100%;
   padding: 18px 20px;

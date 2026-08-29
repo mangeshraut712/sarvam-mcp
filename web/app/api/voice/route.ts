@@ -6,8 +6,17 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(request: Request) {
+  let formData: FormData;
   try {
-    const formData = await request.formData();
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Send audio as multipart/form-data with field name \"audio\"." },
+      { status: 400 },
+    );
+  }
+
+  try {
     const audio = formData.get("audio");
 
     if (!(audio instanceof File)) {

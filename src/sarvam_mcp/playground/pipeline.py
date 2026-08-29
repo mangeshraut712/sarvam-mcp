@@ -13,6 +13,7 @@ from sarvam_mcp.http import SarvamClient
 from sarvam_mcp.auth.api_key import StaticKeyProvider
 from sarvam_mcp.auth.context import set_auth
 from sarvam_mcp.config import Config
+from sarvam_mcp.http.errors import SarvamAPIError
 from sarvam_mcp.workflows._helpers import (
     coerce_tts_language,
     identify_language,
@@ -60,7 +61,12 @@ async def run_pipeline(
     try:
         # --- STT ---
         t0 = time.perf_counter()
-        transcript, stt_lang = await stt_transcribe(sc, audio_path)
+        try:
+            transcript, stt_lang = await stt_transcribe(sc, audio_path)
+        except SarvamAPIError as exc:
+            stt_ms = (time.perf_counter() - t0) * 1000
+            steps.append(PipelineStep("STT", "error", stt_ms, str(exc)))
+            return _error_result(steps, str(exc))
         stt_ms = (time.perf_counter() - t0) * 1000
         if not transcript.strip():
             steps.append(PipelineStep("STT", "error", stt_ms, "Empty transcript"))
@@ -76,7 +82,12 @@ async def run_pipeline(
 
         # --- Language ID ---
         t0 = time.perf_counter()
-        lid_lang, script = await identify_language(sc, transcript)
+        try:
+            lid_lang, script = await identify_language(sc, transcript)
+        except SarvamAPIError as exc:
+            lid_ms = (time.perf_counter() - t0) * 1000
+            steps.append(PipelineStep("Lang ID", "error", lid_ms, str(exc)))
+            return _error_result(steps, str(exc))
         lid_ms = (time.perf_counter() - t0) * 1000
         detected_lang = lid_lang or stt_lang
         detail = detected_lang or "unknown"
@@ -86,13 +97,18 @@ async def run_pipeline(
 
         # --- LLM ---
         t0 = time.perf_counter()
-        reply_text = await llm_complete(
-            sc,
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": transcript},
-            ],
-        )
+        try:
+            reply_text = await llm_complete(
+                sc,
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": transcript},
+                ],
+            )
+        except SarvamAPIError as exc:
+            llm_ms = (time.perf_counter() - t0) * 1000
+            steps.append(PipelineStep("LLM", "error", llm_ms, str(exc)))
+            return _error_result(steps, str(exc))
         llm_ms = (time.perf_counter() - t0) * 1000
         if not reply_text:
             steps.append(PipelineStep("LLM", "error", llm_ms, "Empty reply"))
@@ -102,12 +118,17 @@ async def run_pipeline(
         # --- TTS ---
         tts_lang = coerce_tts_language(detected_lang)
         t0 = time.perf_counter()
-        stored = await tts_synthesize(
-            sc,
-            reply_text,
-            target_language_code=tts_lang,
-            filename_prefix="playground",
-        )
+        try:
+            stored = await tts_synthesize(
+                sc,
+                reply_text,
+                target_language_code=tts_lang,
+                filename_prefix="playground",
+            )
+        except SarvamAPIError as exc:
+            tts_ms = (time.perf_counter() - t0) * 1000
+            steps.append(PipelineStep("TTS", "error", tts_ms, str(exc)))
+            return _error_result(steps, str(exc))
         tts_ms = (time.perf_counter() - t0) * 1000
         steps.append(PipelineStep("TTS", "ok", tts_ms, tts_lang))
 

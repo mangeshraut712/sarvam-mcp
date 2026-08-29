@@ -151,6 +151,9 @@ export default function PlaygroundPage() {
 
         <h1>Sarvam Voice Agent</h1>
         <p className="subtitle">Speak naturally in an Indian language.</p>
+        <p className="hint">
+          Try: या text चा सारांश करा आणि मला मराठीत वाचून दाखवा.
+        </p>
 
         <button
           type="button"

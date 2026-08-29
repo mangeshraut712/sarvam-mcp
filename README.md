@@ -112,6 +112,21 @@ The server exposes tools across two namespaces:
 - **`sarvam_tools_*`** — *runtime* tools. Call Sarvam APIs to do things (transcribe, speak, translate, etc.).
 - **`sarvam_code_*`** — *builder* tools. Help you write code that uses Sarvam: docs, endpoint shapes, language lists, code snippets, starter projects.
 
+## Voice Agent Playground
+
+The `web/` Next.js app includes **Sarvam Voice Agent** at `/playground`. It makes the existing MCP primitives visible as a single loop:
+
+microphone → STT → language ID → LLM (same language) → TTS → browser playback
+
+No extra Sarvam HTTP client: the Next.js route shells out to `python -m sarvam_mcp.playground`, which reuses `workflows/_helpers.py`. Translation is not in the default chain; the LLM is instructed to answer in the user's language.
+
+```bash
+export SARVAM_API_KEY=sk_...
+cd web && npm run dev   # http://localhost:3000/playground
+```
+
+Meetup demo: hold **Hold to Speak** and say *“या text चा सारांश करा आणि मला मराठीत वाचून दाखवा.”* Show the tool timeline, play the Marathi reply, then open Cursor with `uvx sarvam-mcp` from the config above — same STT / Lang ID / LLM / TTS tools.
+
 ## Development
 
 ```bash
