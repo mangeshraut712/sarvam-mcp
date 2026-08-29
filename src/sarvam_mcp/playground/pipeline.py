@@ -9,10 +9,10 @@ from typing import Any
 
 from sarvam_mcp._registry import ServerContext
 from sarvam_mcp.audio import ResourceSink
-from sarvam_mcp.http import SarvamClient
 from sarvam_mcp.auth.api_key import StaticKeyProvider
 from sarvam_mcp.auth.context import set_auth
 from sarvam_mcp.config import Config
+from sarvam_mcp.http import SarvamClient
 from sarvam_mcp.http.errors import SarvamAPIError
 from sarvam_mcp.workflows._helpers import (
     coerce_tts_language,

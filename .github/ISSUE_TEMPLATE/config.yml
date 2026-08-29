@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sarvam API / dashboard help
+    url: https://docs.sarvam.ai
+    about: Official Sarvam product documentation (not this fork).

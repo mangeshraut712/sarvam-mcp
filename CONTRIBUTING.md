@@ -1,103 +1,71 @@
 # Contributing
 
-Thanks for wanting to contribute! This guide gets you from zero to a running dev environment and merged PR.
+Thanks for helping. This repo is a public MIT fork: the Python MCP server comes from [Sarvam AI](https://github.com/sarvamai/sarvam-mcp); Vaani (`web/`) is the WebMCP surface. See [NOTICE](NOTICE) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Prerequisites
 
 - Python 3.11+
-- uv (recommended) or pip
-- A Sarvam API key from `dashboard.sarvam.ai/key-management`
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+- Node.js 20+ if you touch `web/`
+- A Sarvam API key from [dashboard.sarvam.ai/key-management](https://dashboard.sarvam.ai/key-management) for live API calls (unit tests do not need one)
 
 ## Setup
 
 ```bash
-git clone https://github.com/sarvamai/sarvam-mcp.git
+git clone https://github.com/mangeshraut712/sarvam-mcp.git
 cd sarvam-mcp
-uv venv && source .venv/bin/activate
+uv venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 uv pip install -e ".[dev]"
+cd web && npm ci && cd ..
 ```
 
-Store your API key so tests that hit the live API can authenticate:
+Optional live key:
 
 ```bash
 mkdir -p ~/.sarvam
 echo "api_key = sk_..." > ~/.sarvam/credentials
+# or: export SARVAM_API_KEY=sk_...
 ```
 
-## Running tests
+## Tests (required before a PR)
 
 ```bash
 pytest -q
-```
-
-All tests must pass before opening a PR.
-
-## Code style
-
-We use Ruff for linting and formatting:
-
-```bash
 ruff check .
-ruff format .
+ruff format --check .
+cd web && npx tsc --noEmit
 ```
 
-Key settings (from `pyproject.toml`):
-
-- Line length: 110
-- Target: Python 3.11
-- Selected rules: E, F, I, B, UP, N, SIM
-
-## Project structure
+## Project layout
 
 ```
-src/sarvam_mcp/
-├── server.py          # FastMCP entry point
-├── config.py          # Env vars + credentials
-├── _registry.py       # ServerContext dataclass
-├── auth/              # API key management
-├── http/              # SarvamClient (httpx wrapper)
-├── audio/             # AudioSink strategy
-├── observability.py   # Latency + cost tracking
-├── tools/             # Atomic tools (one API call each)
-├── workflows/         # Composite tools (chained calls)
-└── code/              # Builder tools (docs, snippets)
+src/sarvam_mcp/     MCP server (tools, HTTP client, playground CLI)
+tests/              pytest
+web/                Vaani Next.js app + WebMCP registerTool
+SUBMISSION.md       WebMCP Challenge Devpost notes
 ```
 
-## Adding a new tool
+## Adding an MCP tool
 
-1. Create a module in `src/sarvam_mcp/tools/` (or `workflows/` for composite tools).
-2. Export a `register(mcp: FastMCP)` function.
-3. Start the tool body with `sc = await ready_ctx(ctx)`.
-4. Include an `observability` dict in the response.
-5. Add tests in `tests/`.
+1. New module in `src/sarvam_mcp/tools/` (or `workflows/` for composites).
+2. Export `register(mcp: FastMCP)`.
+3. Start API tools with `sc = await ready_ctx(ctx)` and return `observability`.
+4. Add tests under `tests/`.
 
-## Running the server locally
+Do **not** dump every MCP operation onto `document.modelContext`. WebMCP tools live in `web/components/VaaniWorkspace.tsx` and must update the same UI state a human sees. Use current `registerTool(..., { signal })` — not obsolete `provideContext` / `unregisterTool`.
 
-Before opening a PR, run the MCP server locally to verify your changes work end-to-end:
+## Local run
 
 ```bash
-mcp dev src/sarvam_mcp/server.py
+mcp dev src/sarvam_mcp/server.py          # MCP Inspector
+cd web && npm run dev -- --port 3000      # Vaani at /vaani
 ```
 
-This starts the server with the MCP Inspector so you can invoke tools interactively.
+## Pull requests
 
-## Commit conventions
+1. Fork (or branch) from `main`.
+2. One logical change per PR; `pytest -q` and Ruff must pass.
+3. Do not commit API keys, `.env`, or `web/.next`.
+4. Fill in the PR template.
 
-- Keep commits focused — one logical change per commit.
-- Use short, lowercase commit messages describing the change.
-
-## Opening a PR
-
-1. Fork the repo and create a feature branch from `main`.
-2. Make your changes and ensure `pytest -q` passes.
-3. Run `ruff check . && ruff format --check .` to verify style.
-4. Run the server locally with `mcp dev` and verify your changes work.
-5. Push and open a PR against `main`.
-
-## Releasing
-
-Releases are automated via GitHub Actions. Maintainers bump the version in `pyproject.toml` and either push a `v*-qa` tag or manually trigger the publish workflow.
-
-## Questions?
-
-Open an issue or reach out at `support@sarvam.ai`.
+Questions: open a GitHub Discussion or issue. Upstream MCP questions can also go to `support@sarvam.ai`.

@@ -1,0 +1,17 @@
+# NOTICE
+
+This repository is an independent, MIT-licensed community fork of
+[sarvamai/sarvam-mcp](https://github.com/sarvamai/sarvam-mcp), the official
+Sarvam AI MCP server.
+
+- MCP server code, tool names, and Sarvam API integration originate from
+  Sarvam AI and remain under the MIT License.
+- Vaani (`web/`), WebMCP registration, and contest documentation were added
+  in this fork and are also MIT-licensed.
+
+Sarvam, Cursor, and OpenAI are trademarks of their respective owners.
+This project is not an official OpenAI WebMCP Challenge submission until
+you complete Devpost (see `SUBMISSION.md`).
+
+The `pip install sarvam-mcp` package on PyPI is published by upstream
+Sarvam AI. To run **this** fork, clone the repo and install from source.

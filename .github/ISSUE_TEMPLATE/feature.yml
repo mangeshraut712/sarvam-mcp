@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a change that helps humans and agents
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard today for a human or a browser/desktop agent?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: checkboxes
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - label: MCP tool (`sarvam_tools_*` / `sarvam_code_*`)
+        - label: WebMCP tool on `/vaani` (shared UI state)
+        - label: Docs only

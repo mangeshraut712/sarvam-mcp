@@ -46,11 +46,11 @@ dev = [
 sarvam-mcp = "sarvam_mcp.server:main"
 
 [project.urls]
-Homepage = "https://mcp.sarvam.ai"
+Homepage = "https://github.com/mangeshraut712/sarvam-mcp"
 Documentation = "https://docs.sarvam.ai"
-Repository = "https://github.com/sarvamai/sarvam-mcp"
-Issues = "https://github.com/sarvamai/sarvam-mcp/issues"
-Changelog = "https://github.com/sarvamai/sarvam-mcp/releases"
+Repository = "https://github.com/mangeshraut712/sarvam-mcp"
+Issues = "https://github.com/mangeshraut712/sarvam-mcp/issues"
+Upstream = "https://github.com/sarvamai/sarvam-mcp"
 
 [tool.hatch.build]
 artifacts = ["src/sarvam_mcp/icon.svg"]
