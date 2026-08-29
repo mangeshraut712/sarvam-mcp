@@ -140,6 +140,32 @@ async def llm_complete(
     return ((choice.get("message") or {}).get("content") or "").strip()
 
 
+async def identify_language(
+    sc: ServerContext,
+    text: str,
+    *,
+    metrics: ToolMetrics | None = None,
+) -> tuple[str | None, str | None]:
+    """Detect language and script for ``text``. Returns (language_code, script_code)."""
+    body, call = await sc.client.post_json("/text-lid", json_body={"input": text})
+    if metrics is not None:
+        metrics.merge(call)
+    return body.get("language_code"), body.get("script_code")
+
+
+_TTS_SUPPORTED = {
+    "en-IN", "hi-IN", "bn-IN", "ta-IN", "te-IN", "gu-IN",
+    "kn-IN", "ml-IN", "mr-IN", "pa-IN", "od-IN",
+}
+
+
+def coerce_tts_language(detected: str | None) -> str:
+    """Map a detected BCP-47 code to a TTS-supported language, defaulting to hi-IN."""
+    if detected and detected in _TTS_SUPPORTED:
+        return detected
+    return "hi-IN"
+
+
 def merge(metrics: ToolMetrics, call: CallMetrics) -> None:
     """Convenience re-export so workflow modules don't import observability directly."""
     metrics.merge(call)

@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const JSON_CONFIG = `{
   "mcpServers": {
@@ -90,6 +91,7 @@ export default function Home() {
       </p>
 
       <div className="links">
+        <Link href="/playground">Voice Playground</Link>
         <a
           href="https://github.com/sarvamai/sarvam-mcp"
           target="_blank"
