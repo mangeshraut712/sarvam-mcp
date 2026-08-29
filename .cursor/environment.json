@@ -1,0 +1,24 @@
+{
+  "name": "sarvam-mcp",
+  "user": "ubuntu",
+  "install": ".cursor/install.sh",
+  "start": ".cursor/start.sh",
+  "terminals": [
+    {
+      "name": "mcp-inspector",
+      "command": "source .venv/bin/activate && mcp dev src/sarvam_mcp/server.py",
+      "description": "MCP Inspector for interactive Sarvam tool testing"
+    },
+    {
+      "name": "web-dashboard",
+      "command": "cd web && npm run dev -- --hostname 0.0.0.0 --port 3000",
+      "description": "Next.js analytics dashboard (health at /health)"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web-dashboard",
+      "port": 3000
+    }
+  ]
+}

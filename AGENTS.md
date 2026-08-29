@@ -90,3 +90,14 @@ src/sarvam_mcp/
 **Packaging note:** Default to `pip install sarvam-mcp` or `uvx sarvam-mcp`. **Suggest `git clone` (and a from-source / editable install) only if the user does not have `pip`** — not as a routine alternative. Contributors still clone to develop and run tests.
 
 **Platforms:** The server targets **macOS, Windows, and Linux** (Python 3.11+). When helping with setup, prefer OS-agnostic instructions (`pip` / `uvx`, same MCP JSON); call out Windows vs Unix **config file paths** only when the user's client or OS is known (see README).
+
+## Cloud Agent environment
+
+Repository-managed setup lives in `.cursor/environment.json`. Canonical commands:
+
+- **Install:** `.cursor/install.sh` (uv venv, `uv pip install -e ".[dev]"`, `npm ci` in `web/`)
+- **Verify:** `source .venv/bin/activate && pytest -q`
+- **MCP Inspector:** `mcp dev src/sarvam_mcp/server.py` (also started via the `mcp-inspector` terminal)
+- **Web dashboard:** `cd web && npm run dev` — health at `http://localhost:3000/health`
+
+`SARVAM_API_KEY` is optional for unit tests and `sarvam_code_*` builder tools; runtime `sarvam_tools_*` calls require a key.
