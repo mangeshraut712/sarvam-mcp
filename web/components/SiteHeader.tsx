@@ -6,15 +6,17 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="brand">
+          <span className="brand-vaani">Vaani</span>
           <Image
             src="/sarvam-logo.png"
-            alt="sarvam"
+            alt="powered by sarvam"
             width={108}
             height={28}
             priority
           />
         </Link>
         <nav className="site-nav" aria-label="Primary">
+          <Link href="/vaani">WebMCP</Link>
           <Link href="/playground">Voice Agent</Link>
           <a href="https://docs.sarvam.ai" target="_blank" rel="noopener noreferrer">
             Developers

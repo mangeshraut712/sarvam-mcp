@@ -70,7 +70,8 @@ jobs:
 
       - name: Sync dev deps and run tests
         run: |
-          uv sync --extra dev
+          uv venv
+          uv pip install -e ".[dev]"
           uv run pytest -q
 
       - name: Build distributions

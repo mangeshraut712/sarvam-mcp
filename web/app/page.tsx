@@ -50,16 +50,20 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="hero-glow" aria-hidden="true" />
-        <p className="eyebrow">India&apos;s sovereign AI, as MCP tools</p>
+        <p className="eyebrow">Vaani · powered by Sarvam MCP + WebMCP</p>
         <Ornament className="hero-ornament" />
-        <h1 className="display">AI for all from India</h1>
+        <h1 className="display">Speak to the agentic web</h1>
         <p className="lede">
-          Drop Sarvam speech, language, and document APIs into Cursor, Claude,
-          Windsurf, or Zed. One config. Twenty-two languages. No boilerplate.
+          Use the web in your language, with your voice. Humans and browser
+          agents share one application state. Desktop agents still use the
+          Sarvam MCP server.
         </p>
         <div className="hero-actions">
-          <Link className="btn btn-solid" href="/playground">
-            Try Voice Agent
+          <Link className="btn btn-solid" href="/vaani">
+            Open Vaani
+          </Link>
+          <Link className="btn btn-ghost" href="/playground">
+            Voice playground
           </Link>
           <a
             className="btn btn-ghost"
@@ -74,13 +78,13 @@ export default function Home() {
       </section>
 
       <section className="trust">
-        <p className="trust-label">Works inside the agents you already use</p>
+        <p className="trust-label">Two agent surfaces, one language layer</p>
         <ul className="trust-row">
+          <li>WebMCP (browser)</li>
+          <li>ChatGPT in-app browser</li>
           <li>Cursor</li>
-          <li>Claude Desktop</li>
           <li>Claude Code</li>
           <li>Windsurf</li>
-          <li>Zed</li>
         </ul>
       </section>
 
@@ -105,8 +109,8 @@ export default function Home() {
                 Hold to speak, watch the tool chain, play the reply. No
                 English gate. The user never has to switch languages.
               </p>
-              <Link className="btn btn-solid" href="/playground">
-                Open playground
+              <Link className="btn btn-solid" href="/vaani">
+                Open Vaani WebMCP
               </Link>
             </div>
             <ol className="flow-list">

@@ -1,0 +1,36 @@
+name: Bug report
+description: Something does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Search existing issues first. Never paste API keys.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - MCP server (Python)
+        - Vaani / WebMCP (web/)
+        - Docs / CI
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Commands, OS, Python/Node versions. No secrets.
+    validations:
+      required: true

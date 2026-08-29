@@ -19,9 +19,9 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Sarvam MCP — Voice, language, and document AI for agents",
+  title: "Vaani — Speak to the Agentic Web",
   description:
-    "Official Sarvam MCP server. Speech-to-text, TTS, translation, and Indic LLMs as tools for Cursor, Claude, Windsurf, and Zed.",
+    "Multilingual, voice-first WebMCP. Humans speak in their language; browser agents call structured tools on the same app state. Powered by Sarvam MCP.",
 };
 
 export default function RootLayout({

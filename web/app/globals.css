@@ -64,7 +64,16 @@ a {
 .brand {
   display: flex;
   align-items: center;
+  gap: 12px;
   flex-shrink: 0;
+  text-decoration: none;
+}
+
+.brand-vaani {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1;
 }
 
 .site-nav {
@@ -701,4 +710,152 @@ a {
 
 .footnote a {
   color: var(--ink);
+}
+
+/* Vaani WebMCP workspace */
+.vaani-body {
+  padding: 28px 24px 32px;
+}
+
+.vaani {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.webmcp-pill {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--wash);
+  color: var(--muted);
+}
+
+.webmcp-pill.is-registered {
+  background: #e8f7ee;
+  color: #1a7a3a;
+}
+
+.webmcp-pill.is-unavailable {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
+.webmcp-pill.is-error {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.vaani-spec {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.vaani-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 860px) {
+  .vaani-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.vaani-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vaani-pane textarea,
+.vaani-pane select,
+.vaani-controls select {
+  width: 100%;
+  font: inherit;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.vaani-result {
+  min-height: 220px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--wash);
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.vaani-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.vaani-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.vaani-actor {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.vaani .error {
+  text-align: left;
+  max-width: none;
+}
+
+.vaani-demo {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff4e5;
+  color: #7a4a00;
+}
+
+.vaani-audio {
+  width: 100%;
+  max-width: 420px;
+}
+
+.vaani-notes ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vaani-notes li {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  white-space: pre-wrap;
+}
+
+.vaani-note-lang {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-right: 8px;
 }
