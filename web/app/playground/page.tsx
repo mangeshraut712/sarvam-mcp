@@ -249,8 +249,8 @@ export default function PlaygroundPage() {
       </div>
 
       <p className="footnote">
-        Same primitives as MCP tools.{" "}
-        <Link href="/">Paste the Cursor config</Link> — STT, language ID, LLM, and TTS.
+        Same primitives as MCP tools. Next:{" "}
+        <Link href="/vaani">Vaani WebMCP</Link> — STT, language ID, LLM, and TTS.
       </p>
     </div>
   );

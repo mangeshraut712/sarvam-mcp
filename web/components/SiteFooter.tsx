@@ -6,15 +6,18 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="footer-brand">
+          <p className="brand-vaani">Vaani</p>
           <Image src="/sarvam-logo.png" alt="sarvam" width={108} height={28} />
-          <p className="footer-tagline">AI for all from India.</p>
+          <p className="footer-tagline">Speak to the agentic web.</p>
           <p className="footer-fine">
-            Official MCP server for Sarvam speech, language, and document APIs.
+            Multilingual WebMCP experience on the same Sarvam MCP capability
+            layer used by Cursor and Claude.
           </p>
         </div>
         <div className="footer-cols">
           <div>
             <h3>Product</h3>
+            <Link href="/vaani">Vaani (WebMCP)</Link>
             <Link href="/playground">Voice Agent Playground</Link>
             <Link href="/">MCP setup</Link>
             <a href="https://www.sarvam.ai" target="_blank" rel="noopener noreferrer">
@@ -59,7 +62,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="site-footer-legal">
-        <span>MCP tools for Cursor, Claude, Windsurf, and Zed.</span>
+        <span>MCP for developer agents · WebMCP for browser agents.</span>
         <a href="https://www.sarvam.ai" target="_blank" rel="noopener noreferrer">
           sarvam.ai
         </a>

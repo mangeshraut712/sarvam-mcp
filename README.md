@@ -112,20 +112,41 @@ The server exposes tools across two namespaces:
 - **`sarvam_tools_*`** — *runtime* tools. Call Sarvam APIs to do things (transcribe, speak, translate, etc.).
 - **`sarvam_code_*`** — *builder* tools. Help you write code that uses Sarvam: docs, endpoint shapes, language lists, code snippets, starter projects.
 
+## Vaani — Speak to the Agentic Web
+
+The `web/` app is the **Vaani** product surface (WebMCP Challenge). `sarvam-mcp` remains the library/MCP server for desktop agents.
+
+```
+Sarvam APIs
+    └── shared capability layer (this package)
+            ├── MCP server  → Cursor / Claude / Windsurf / Zed
+            └── web/ Vaani  → document.modelContext (browser agents)
+```
+
+**Day 1:** voice playground at `/playground` plus one WebMCP tool on `/vaani`:
+
+- `translate_content` — registered with `document.modelContext.registerTool(...)` (current spec). Unregister via `AbortSignal`. Do **not** use obsolete `provideContext()`, `clearContext()`, or `unregisterTool()`.
+- Human and agent write the **same** translation panel.
+- Translation uses the same `/translate` path as `sarvam_tools_translate` (`python -m sarvam_mcp.playground translate`).
+
+Later tools (not dumped from all 14 MCP ops): `understand_audio`, `explain_content`, `summarize_content`, `speak_content`, `create_multilingual_note`.
+
 ## Voice Agent Playground
 
-The `web/` Next.js app includes **Sarvam Voice Agent** at `/playground`. It makes the existing MCP primitives visible as a single loop:
+`/playground` is the Cafe Cursor voice loop:
 
 microphone → STT → language ID → LLM (same language) → TTS → browser playback
 
-No extra Sarvam HTTP client: the Next.js route shells out to `python -m sarvam_mcp.playground`, which reuses `workflows/_helpers.py`. Translation is not in the default chain; the LLM is instructed to answer in the user's language.
+No extra Sarvam HTTP client: the Next.js route shells out to `python -m sarvam_mcp.playground`, which reuses `workflows/_helpers.py`. Translation is not in the default voice chain; the LLM answers in the user's language.
 
 ```bash
 export SARVAM_API_KEY=sk_...
-cd web && npm run dev   # http://localhost:3000/playground
+cd web && npm run dev
+# http://localhost:3000/vaani
+# http://localhost:3000/playground
 ```
 
-Meetup demo: hold **Hold to Speak** and say *“या text चा सारांश करा आणि मला मराठीत वाचून दाखवा.”* Show the tool timeline, play the Marathi reply, then open Cursor with `uvx sarvam-mcp` from the config above — same STT / Lang ID / LLM / TTS tools.
+Meetup demo: open **Vaani**, paste text, translate to Marathi (human). Then show WebMCP status. Hold **Hold to Speak** on `/playground` for the voice loop. Desktop agents still use `uvx sarvam-mcp`.
 
 ## Web deploy
 
@@ -137,7 +158,7 @@ docker build -t sarvam-mcp-web .
 docker run --rm -p 8000:8000 -e SARVAM_API_KEY=sk_... sarvam-mcp-web
 ```
 
-Verify: `GET /health`, `GET /ready`, `GET /`, `GET /playground`, `GET /api/sarvam-status`.
+Verify: `GET /health`, `GET /ready`, `GET /`, `GET /vaani`, `GET /playground`, `GET /api/sarvam-status`.
 
 ## Development
 
