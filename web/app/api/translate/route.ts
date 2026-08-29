@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { runTranslate } from "@/lib/translate-server";
+import { runTranslate } from "@/lib/vaani-actions";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  let body: {
-    text?: unknown;
-    targetLanguage?: unknown;
-    sourceLanguage?: unknown;
-  };
+  let body: { text?: unknown; targetLanguage?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -23,27 +19,14 @@ export async function POST(request: Request) {
   const text = typeof body.text === "string" ? body.text : "";
   const targetLanguage =
     typeof body.targetLanguage === "string" ? body.targetLanguage : "";
-  const sourceLanguage =
-    typeof body.sourceLanguage === "string" ? body.sourceLanguage : undefined;
 
-  if (!text.trim()) {
-    return NextResponse.json({ ok: false, error: "text is required." }, { status: 400 });
-  }
-  if (!targetLanguage.trim()) {
+  if (!text.trim() || !targetLanguage.trim()) {
     return NextResponse.json(
-      { ok: false, error: "targetLanguage is required (e.g. mr-IN)." },
+      { ok: false, error: "text and targetLanguage are required." },
       { status: 400 },
     );
   }
 
-  try {
-    const result = await runTranslate({ text, targetLanguage, sourceLanguage });
-    if (!result.ok) {
-      return NextResponse.json(result, { status: 422 });
-    }
-    return NextResponse.json(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Translate failed.";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
-  }
+  const result = await runTranslate({ text, targetLanguage });
+  return NextResponse.json(result, { status: result.ok ? 200 : 422 });
 }

@@ -14,16 +14,17 @@ export default function VaaniPage() {
         <Ornament className="hero-ornament" />
         <h1 className="display display-md">Speak to the agentic web</h1>
         <p className="lede">
-          Humans work in their language. Browser agents call structured WebMCP
-          tools that mutate the same application state. Powered by Sarvam MCP
-          underneath — not a second HTTP client.
+          Six WebMCP tools share this page with you: understand audio,
+          translate, explain, summarize, speak, and pin a note. Same Sarvam
+          language layer as the MCP server. Judges: enable WebMCP or use
+          ChatGPT&apos;s in-app browser.
         </p>
         <ApiStatus />
       </div>
 
       <div className="platform-card pg-card">
         <div className="platform-tabs">
-          <span className="tab is-active">translate_content</span>
+          <span className="tab is-active">6 WebMCP tools</span>
           <span className="tab">Shared state</span>
           <span className="tab">registerTool</span>
         </div>

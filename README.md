@@ -123,13 +123,9 @@ Sarvam APIs
             └── web/ Vaani  → document.modelContext (browser agents)
 ```
 
-**Day 1:** voice playground at `/playground` plus one WebMCP tool on `/vaani`:
+**WebMCP Challenge:** see [`SUBMISSION.md`](SUBMISSION.md) for official requirements, Devpost draft text, and deploy notes. Vaani is at `/vaani` with six `registerTool` capabilities. MCP clients still use `uvx sarvam-mcp`.
 
-- `translate_content` — registered with `document.modelContext.registerTool(...)` (current spec). Unregister via `AbortSignal`. Do **not** use obsolete `provideContext()`, `clearContext()`, or `unregisterTool()`.
-- Human and agent write the **same** translation panel.
-- Translation uses the same `/translate` path as `sarvam_tools_translate` (`python -m sarvam_mcp.playground translate`).
-
-Later tools (not dumped from all 14 MCP ops): `understand_audio`, `explain_content`, `summarize_content`, `speak_content`, `create_multilingual_note`.
+```
 
 ## Voice Agent Playground
 
@@ -158,7 +154,7 @@ docker build -t sarvam-mcp-web .
 docker run --rm -p 8000:8000 -e SARVAM_API_KEY=sk_... sarvam-mcp-web
 ```
 
-Verify: `GET /health`, `GET /ready`, `GET /`, `GET /vaani`, `GET /playground`, `GET /api/sarvam-status`.
+Verify: `GET /health`, `GET /ready`, `GET /`, `GET /vaani`, `GET /playground`, `GET /api/sarvam-status`. Contest write-up: `SUBMISSION.md`.
 
 ## Development
 
