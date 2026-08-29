@@ -99,5 +99,6 @@ Repository-managed setup lives in `.cursor/environment.json`. Canonical commands
 - **Verify:** `source .venv/bin/activate && pytest -q`
 - **MCP Inspector:** `mcp dev src/sarvam_mcp/server.py` (also started via the `mcp-inspector` terminal)
 - **Web dashboard:** `cd web && npm run dev` — health at `http://localhost:3000/health`
+- **Voice Playground:** `http://localhost:3000/playground` — STT → Lang ID → LLM → TTS demo
 
-`SARVAM_API_KEY` is optional for unit tests and `sarvam_code_*` builder tools; runtime `sarvam_tools_*` calls require a key.
+`SARVAM_API_KEY` is optional for unit tests and `sarvam_code_*` builder tools; runtime `sarvam_tools_*` calls and the Voice Playground require a key. For Cloud Agents, add `SARVAM_API_KEY` as an **Environment secret** in the dashboard (not in `environment.json`). Restart the agent after saving the secret so the running pod receives it.

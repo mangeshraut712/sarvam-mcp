@@ -15,4 +15,8 @@ if [[ ! -d web/node_modules ]]; then
   exit 1
 fi
 
+if [[ -z "${SARVAM_API_KEY:-}" ]] && [[ ! -f "${HOME}/.sarvam/credentials" ]]; then
+  echo "note: SARVAM_API_KEY not set — Voice Playground and runtime MCP tools need a key"
+fi
+
 echo "sarvam-mcp environment ready"
