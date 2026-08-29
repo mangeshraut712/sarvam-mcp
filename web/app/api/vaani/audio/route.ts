@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { runUnderstandAudio } from "@/lib/vaani-actions";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   let formData: FormData;
