@@ -211,6 +211,21 @@ a {
   flex-wrap: wrap;
 }
 
+.api-status {
+  position: relative;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--faint);
+}
+
+.api-status.is-ok {
+  color: #1a7a3a;
+}
+
+.api-status.is-warn {
+  color: #9a3412;
+}
+
 /* Trust */
 .trust {
   padding: 12px 24px 48px;

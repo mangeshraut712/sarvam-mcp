@@ -324,7 +324,8 @@ PRICING_DISCLAIMER = (
     "This is a high-level pricing structure; exact per-unit rates depend on "
     "your Sarvam plan and may have changed since last update. ALWAYS confirm "
     "current rates at https://dashboard.sarvam.ai → Billing before quoting "
-    "production-bound numbers. New users receive Rs. 1000 in free credits."
+    "production-bound numbers. New users receive Rs. 100 in signup credits "
+    "shared across all inference APIs. GET /v1/models is unmetered."
 )
 
 

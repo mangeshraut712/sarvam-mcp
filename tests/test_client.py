@@ -41,6 +41,23 @@ async def test_auth_header_is_attached(client, httpx_mock):
     assert metrics.status_code == 200
 
 
+async def test_get_json_models_catalog(client, httpx_mock):
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.sarvam.ai/v1/models",
+        json={
+            "object": "list",
+            "data": [
+                {"id": "sarvam-105b", "object": "model"},
+                {"id": "sarvam-105b-conversations", "object": "model"},
+            ],
+        },
+    )
+    payload, metrics = await client.get_json("/v1/models")
+    assert metrics.status_code == 200
+    assert payload["data"][0]["id"] == "sarvam-105b"
+
+
 async def test_user_agent_reports_package_version(client, httpx_mock):
     # The outbound User-Agent must track the installed package version so
     # Sarvam's server-side telemetry attributes traffic to the right release.

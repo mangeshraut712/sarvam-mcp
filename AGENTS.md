@@ -103,6 +103,6 @@ Repository-managed setup lives in `.cursor/environment.json`. Canonical commands
 
 `SARVAM_API_KEY` is optional for unit tests and `sarvam_code_*` builder tools; runtime `sarvam_tools_*` calls and the Voice Playground require a key. For Cloud Agents, add `SARVAM_API_KEY` as an **Environment secret** in the dashboard (not in `environment.json`). Restart the agent after saving the secret so the running pod receives it.
 
-A valid key can still fail live calls with HTTP 402 (`No credits available`). Add credits at [dashboard.sarvam.ai](https://dashboard.sarvam.ai) → Billing. Chat completions must use `sarvam-105b` or `sarvam-105b-conversations` — `sarvam-30b` is deprecated and rejected by the API.
+A valid key can still fail **inference** (STT, TTS, LLM, translate, language ID) with HTTP 402 when the account has no remaining credits. Signup credits are ₹100 and are shared across every Model API. Chat completions on the hosted API accept only `sarvam-105b` and `sarvam-105b-conversations`. `GET /v1/models` is unmetered and returns HTTP 200 with a valid key even when inference is 402.
 
 Recurring Cloud Agent environment builds clone `main`. If `.cursor/install.sh` is missing on `main`, install exits 127. Merge the env-setup PR (or this branch) into `main`, then re-save the Cloud Agent environment so install/start commands match `.cursor/environment.json`.

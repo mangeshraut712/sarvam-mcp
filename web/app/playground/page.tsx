@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { Ornament } from "@/components/Ornament";
+import { ApiStatus } from "@/components/ApiStatus";
 import {
   blobToPlayableUrl,
   languageLabel,
@@ -144,6 +145,7 @@ export default function PlaygroundPage() {
         <p className="lede">
           Try: या text चा सारांश करा आणि मला मराठीत वाचून दाखवा.
         </p>
+        <ApiStatus />
       </div>
 
       <div className="platform-card pg-card">

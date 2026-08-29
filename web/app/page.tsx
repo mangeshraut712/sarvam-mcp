@@ -4,6 +4,7 @@ import { useCallback, useRef } from "react";
 import Link from "next/link";
 
 import { Ornament } from "@/components/Ornament";
+import { ApiStatus } from "@/components/ApiStatus";
 
 const JSON_CONFIG = `{
   "mcpServers": {
@@ -69,6 +70,7 @@ export default function Home() {
             Get API Key
           </a>
         </div>
+        <ApiStatus />
       </section>
 
       <section className="trust">
