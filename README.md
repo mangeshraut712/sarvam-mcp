@@ -1,6 +1,6 @@
 # sarvam-mcp
 
-Official Sarvam MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (30B / 105B), Vision Document Intelligence, Pronunciation Dictionaries — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed) can call Sarvam with zero boilerplate.
+Official Sarvam MCP server. Exposes every public Sarvam API — STT, TTS, Translate, Transliterate, Language ID, Text Analytics, LLM (`sarvam-105b`), Vision Document Intelligence, Pronunciation Dictionaries — as first-class MCP tools so any MCP-aware client (Claude Desktop, Claude Code, Cursor, Windsurf, Zed) can call Sarvam with zero boilerplate.
 
 Cross-platform Python package: **macOS, Windows, and Linux** (Python 3.11+).
 
@@ -126,6 +126,18 @@ cd web && npm run dev   # http://localhost:3000/playground
 ```
 
 Meetup demo: hold **Hold to Speak** and say *“या text चा सारांश करा आणि मला मराठीत वाचून दाखवा.”* Show the tool timeline, play the Marathi reply, then open Cursor with `uvx sarvam-mcp` from the config above — same STT / Lang ID / LLM / TTS tools.
+
+## Web deploy
+
+```bash
+cd web
+npm ci && npm run build
+# Production image (healthcheck on :8000/health)
+docker build -t sarvam-mcp-web .
+docker run --rm -p 8000:8000 -e SARVAM_API_KEY=sk_... sarvam-mcp-web
+```
+
+Verify: `GET /health`, `GET /ready`, `GET /`, `GET /playground`, `GET /api/sarvam-status`.
 
 ## Development
 
