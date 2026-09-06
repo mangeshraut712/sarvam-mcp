@@ -24,6 +24,7 @@ from sarvam_mcp.tools import (
     auth,
     language,
     llm,
+    local_infer,
     pronunciation,
     stt,
     translate,
@@ -123,6 +124,7 @@ def build_server() -> FastMCP:
     transliterate.register(mcp)
     language.register(mcp)
     llm.register(mcp)
+    local_infer.register(mcp)
     vision.register(mcp)
     pronunciation.register(mcp)
 

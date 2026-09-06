@@ -20,6 +20,7 @@ EXPECTED_TOOLS = {
     "sarvam_tools_identify_language",
     "sarvam_tools_text_analytics",
     "sarvam_tools_llm_complete",
+    "sarvam_tools_local_infer",
     "sarvam_tools_vision_extract",
     "sarvam_tools_vision_job_status",
     "sarvam_tools_pronunciation_list",
@@ -37,6 +38,7 @@ EXPECTED_TOOLS = {
     "sarvam_code_snippet",
     "sarvam_code_recommend_model",
     "sarvam_code_validate_request",
+    "sarvam_code_ondevice_runtime",
 }
 
 

@@ -11,10 +11,11 @@ Two families (registered separately so individual modules stay small):
 
 from fastmcp import FastMCP
 
-from . import docs, snippets
+from . import docs, ondevice, snippets
 
 
 def register(mcp: FastMCP) -> None:
     """Register all sarvam_code_* tools onto the FastMCP server."""
     docs.register(mcp)
     snippets.register(mcp)
+    ondevice.register(mcp)
