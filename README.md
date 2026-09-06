@@ -55,7 +55,7 @@ MCP client config:
 }
 ```
 
-From a source checkout, point `command` at `.venv/bin/sarvam-mcp` (or `python -m sarvam_mcp.server` if you add that later). Config paths: Cursor `~/.cursor/mcp.json`; Claude Desktop `claude_desktop_config.json`; Windows uses `%USERPROFILE%` / `%APPDATA%`.
+From a source checkout, point `command` at `.venv/bin/sarvam-mcp` or `python -m sarvam_mcp`. Config paths: Cursor `~/.cursor/mcp.json`; Claude Desktop `claude_desktop_config.json`; Windows uses `%USERPROFILE%` / `%APPDATA%`.
 
 You can store `api_key = sk_...` in `~/.sarvam/credentials` instead of the JSON `env` block.
 
@@ -91,17 +91,17 @@ Defaults match current non-deprecated Sarvam models.
 
 | Tool | What it does | Default model |
 |---|---|---|
-| `sarvam_stt_transcribe` | Audio file → transcript | `saaras:v3` |
-| `sarvam_tts_speak` | Text → audio file | `bulbul:v3` |
-| `sarvam_tts_stream` | Text → streamed audio | `bulbul:v3` |
-| `sarvam_translate` | Cross-language text translate | `mayura:v1` |
-| `sarvam_transliterate` | Script conversion | — |
-| `sarvam_identify_language` | Language + script detect | — |
-| `sarvam_text_analytics` | Typed Q&A over text | — |
-| `sarvam_llm_complete` | Chat completions | `sarvam-105b` |
-| `sarvam_vision_extract` | Document Intelligence | Sarvam Vision |
-| `sarvam_vision_job_status` | Poll Document Intelligence job | — |
-| `sarvam_pronunciation_*` | Pronunciation dictionaries | — |
+| `sarvam_tools_stt_transcribe` | Audio file → transcript | `saaras:v3` |
+| `sarvam_tools_tts_speak` | Text → audio file | `bulbul:v3` |
+| `sarvam_tools_tts_stream` | Text → streamed audio | `bulbul:v3` |
+| `sarvam_tools_translate` | Cross-language text translate | `mayura:v1` |
+| `sarvam_tools_transliterate` | Script conversion | — |
+| `sarvam_tools_identify_language` | Language + script detect | — |
+| `sarvam_tools_text_analytics` | Typed Q&A over text | — |
+| `sarvam_tools_llm_complete` | Chat completions | `sarvam-105b` |
+| `sarvam_tools_vision_extract` | Document Intelligence | Sarvam Vision |
+| `sarvam_tools_vision_job_status` | Poll Document Intelligence job | — |
+| `sarvam_tools_pronunciation_*` | Pronunciation dictionaries | — |
 
 Namespaces: `sarvam_tools_*` (call APIs now) vs `sarvam_code_*` (docs and snippets for builders).
 
@@ -121,9 +121,7 @@ Namespaces: `sarvam_tools_*` (call APIs now) vs `sarvam_code_*` (docs and snippe
 
 ```bash
 uv pip install -e ".[dev]"
-pytest -q
-ruff check .
-cd web && npx tsc --noEmit
+bash scripts/verify.sh
 mcp dev src/sarvam_mcp/server.py
 ```
 

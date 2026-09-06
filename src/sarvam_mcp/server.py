@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import logging
+import shutil
 import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -10,12 +13,26 @@ from contextlib import asynccontextmanager
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
+from sarvam_mcp import __version__, code, workflows
 from sarvam_mcp._registry import ServerContext
 from sarvam_mcp.analytics import track_tool_use
 from sarvam_mcp.audio import build_sink
 from sarvam_mcp.auth import StaticKeyProvider, set_auth
 from sarvam_mcp.config import Config
 from sarvam_mcp.http import SarvamClient
+from sarvam_mcp.tools import (
+    auth,
+    language,
+    llm,
+    pronunciation,
+    stt,
+    translate,
+    transliterate,
+    tts,
+    update,
+    vision,
+)
+from sarvam_mcp.tools.update import check_pypi_version
 
 try:
     import base64
@@ -37,9 +54,6 @@ logger = logging.getLogger("sarvam_mcp")
 @asynccontextmanager
 async def _lifespan(_server: FastMCP) -> AsyncIterator[ServerContext]:
     """Build shared deps once at server start; tear down at shutdown."""
-    from sarvam_mcp import __version__
-    from sarvam_mcp.tools.update import check_pypi_version
-
     config = Config.load()
 
     if config.api_key:
@@ -90,8 +104,6 @@ class _AnalyticsMiddleware(Middleware):
             error_msg = f"{type(exc).__name__}: {exc}"
             raise
         finally:
-            from sarvam_mcp import __version__
-
             tool_name = getattr(context.message, "name", "unknown")
             arguments = getattr(context.message, "arguments", None)
             response = error_msg if status == "error" else result
@@ -102,19 +114,6 @@ def build_server() -> FastMCP:
     """Construct the FastMCP server with all tools registered."""
     mcp = FastMCP("sarvam-mcp", lifespan=_lifespan, icons=_SERVER_ICONS)
     mcp.add_middleware(_AnalyticsMiddleware())
-
-    from sarvam_mcp.tools import (
-        auth,
-        language,
-        llm,
-        pronunciation,
-        stt,
-        translate,
-        transliterate,
-        tts,
-        update,
-        vision,
-    )
 
     auth.register(mcp)
     update.register(mcp)
@@ -127,8 +126,6 @@ def build_server() -> FastMCP:
     vision.register(mcp)
     pronunciation.register(mcp)
 
-    from sarvam_mcp import code, workflows
-
     code.register(mcp)
     workflows.voice.register(mcp)
     workflows.dub.register(mcp)
@@ -140,9 +137,6 @@ def build_server() -> FastMCP:
 
 def _print_config(api_key: str | None = None) -> None:
     """Print MCP client configuration JSON to stdout."""
-    import json
-    import shutil
-
     env: dict[str, str] = {}
     if api_key:
         env["SARVAM_API_KEY"] = api_key
@@ -181,8 +175,6 @@ def main() -> None:
         sarvam-mcp --print                 — print MCP client config JSON
         sarvam-mcp --api-key=sk_... --print — include API key in the config
     """
-    import argparse
-
     parser = argparse.ArgumentParser(
         prog="sarvam-mcp",
         description="Sarvam AI MCP server — STT, TTS, Translate & more for Indic languages",
