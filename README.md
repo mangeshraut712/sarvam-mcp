@@ -117,6 +117,10 @@ Namespaces: `sarvam_tools_*` (call APIs now) vs `sarvam_code_*` (docs and snippe
 
 `GET https://api.sarvam.ai/v1/models` is unmetered; STT/TTS/LLM/translate consume credits.
 
+## Local / on-device runtime (this fork)
+
+Official Sarvam GitHub is **cloud API** first. Open weights exist, but everyday laptop runtimes (Ollama / mainline llama.cpp) still lack `sarvam_moe`. This repo ships a **systems contract** instead of a 30B download: crash isolation, fair inference slots, typed stream events, and **no silent cloud fallback**. Guide: [docs/ON_DEVICE.md](docs/ON_DEVICE.md). MCP: `sarvam_code_ondevice_runtime`, `sarvam_tools_local_infer`.
+
 ## Development
 
 ```bash

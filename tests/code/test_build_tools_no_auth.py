@@ -13,7 +13,7 @@ from fastmcp import Client, FastMCP
 
 import sarvam_mcp.auth.elicit as elicit
 from sarvam_mcp.auth.context import _current
-from sarvam_mcp.code import docs, snippets
+from sarvam_mcp.code import docs, ondevice, snippets
 
 # (tool_name, arguments) for every build-time tool.
 BUILD_TOOLS = [
@@ -27,6 +27,7 @@ BUILD_TOOLS = [
     ("sarvam_code_languages", {"api": "tts"}),
     ("sarvam_code_speakers", {"model": "bulbul:v3"}),
     ("sarvam_code_pricing", {}),
+    ("sarvam_code_ondevice_runtime", {"topic": "overview"}),
 ]
 
 
@@ -43,6 +44,7 @@ def code_server():
     mcp = FastMCP("test")
     snippets.register(mcp)
     docs.register(mcp)
+    ondevice.register(mcp)
     return mcp
 
 
