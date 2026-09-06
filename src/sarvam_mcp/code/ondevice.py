@@ -25,7 +25,7 @@ GUIDE: dict[str, dict[str, Any]] = {
             "Sarvam's public GitHub (sarvam-mcp, cookbook, skills, AI SDK) is cloud API first.",
             "Open weights (sarvam-30b / 105b) are on Hugging Face.",
             "Laptop GGUF/Ollama is still blocked on llama.cpp sarvam_moe support.",
-            "This repo adds a local runtime contract: crashes, slots, explicit cloud opt-in.",
+            "This repo implements study-note control-plane pieces (breaker, KV math, LRU, replay).",
         ],
     },
     "process_isolation": {

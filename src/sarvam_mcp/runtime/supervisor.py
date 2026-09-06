@@ -11,6 +11,7 @@ from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 
 from sarvam_mcp.runtime.events import stream_event
+from sarvam_mcp.runtime.replay import TokenReplayBuffer
 from sarvam_mcp.runtime.scheduler import SlotScheduler
 
 
@@ -42,6 +43,7 @@ class Supervisor:
     scheduler: SlotScheduler
     generate_tokens: TokenFn = echo_tokens
     _cache: dict[str, list[str]] = field(default_factory=dict)
+    replay: TokenReplayBuffer = field(default_factory=lambda: TokenReplayBuffer(maxlen=64))
     restarts: int = 0
 
     def tokens_for(self, request_id: str) -> list[str]:
@@ -62,6 +64,7 @@ class Supervisor:
             try:
                 async for token in self.generate_tokens(prompt, resume_from_seq):
                     produced.append(token)
+                    self.replay.append(seq, token)
                     yield stream_event(
                         type="token",
                         request_id=request_id,
@@ -69,7 +72,12 @@ class Supervisor:
                         text=token,
                     )
                     seq += 1
-                yield stream_event(type="done", request_id=request_id, seq=seq)
+                yield stream_event(
+                    type="done",
+                    request_id=request_id,
+                    seq=seq,
+                    finish_reason="stop",
+                )
             except WorkerCrashError as exc:
                 self.restarts += 1
                 if not isolate_crash:
@@ -79,4 +87,6 @@ class Supervisor:
                     request_id=request_id,
                     seq=seq,
                     error=f"worker_crash:{exc}; resume_from_seq={seq}",
+                    recoverable=True,
+                    code="WORKER_CRASHED",
                 )

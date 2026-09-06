@@ -60,3 +60,10 @@ class SlotScheduler:
     @property
     def in_use(self) -> int:
         return self._in_use
+
+
+def aged_priority(base: int, waited_ms: int, *, age_ms: int = 1000) -> int:
+    """B9 — priority aging so background work cannot starve forever."""
+    if waited_ms < 0:
+        raise ValueError("waited_ms must be >= 0")
+    return base + waited_ms // age_ms

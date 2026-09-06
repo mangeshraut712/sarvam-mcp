@@ -1,29 +1,37 @@
 # On-device / local runtime (this fork)
 
-This is **not** a reproduction of anyone’s interview take-home. It is an
-original, testable contract for the *kind of thinking* those loops reward:
-failure as default, memory ceilings, fair slots, typed streams, explicit
-cloud opt-in.
+Practice code for the **systems** half of on-device AI study notes. This is
+**not** a hiring take-home and **not** a weight-loading engine.
 
-## What official Sarvam GitHub actually contains
+## Study-note coverage
 
-| Repo | Fit for on-device work |
-|---|---|
-| [sarvamai/sarvam-mcp](https://github.com/sarvamai/sarvam-mcp) | Cloud MCP tools. This fork adds `sarvam_mcp.runtime` + Vaani. |
-| [sarvamai/sarvam-ai-cookbook](https://github.com/sarvamai/sarvam-ai-cookbook) | Cloud notebooks. Best upstream PR: “route local vs hosted” without shipping 30B. |
-| [sarvamai/skills](https://github.com/sarvamai/skills) | Cursor/Claude skills for chat/STT/TTS. On-device skill waits on GGUF. |
-| [sarvamai/sarvam-ai-sdk](https://github.com/sarvamai/sarvam-ai-sdk) | Hosted Vercel AI SDK provider. |
-| [sarvamai/model-deployments](https://github.com/sarvamai/model-deployments) | Empty README when last checked. |
-| [sarvamai/sarvam-30b](https://huggingface.co/sarvamai/sarvam-30b) (HF) | Open weights; laptop GGUF needs patched llama.cpp (`sarvam_moe`). Ollama still blocked. |
+| Notes | In this repo | How |
+|---|---|---|
+| A1–A5 transformers / train / compress | Documented only | `sarvam_code_ondevice_runtime` |
+| B1 different systems problem | Yes | comments + `DeviceProfile` |
+| B2 formats / mmap | Documented | no pickle loader (on purpose) |
+| B3 quantization | Similar | `quant.weight_bytes` / `size_vs_fp16` (math, not GPTQ) |
+| B4 MHA/MQA/GQA | Yes | `kv_budget.py` |
+| B5 engines | Partial | `choose_backend` + docs |
+| B6 fallback + breaker | Yes | `CircuitBreaker` + no silent cloud |
+| B7 KV + warm pool + swap | Yes | `kv_budget`, `WarmPool`, `LruCache` / `LruK` |
+| B8 streaming + resume | Yes | `stream_event`, `TokenReplayBuffer`, supervisor |
+| B9 slots + aging | Yes | `SlotScheduler`, `aged_priority` |
+| B10 process isolation | Similar | `Supervisor` (task-isolated; not OS processes in CI) |
+| B11 idempotency / errors | Yes | `resume_from_seq`, `errors.py` |
+| B12 multi-model RAM | Yes | `admit` accept/unload/queue/refuse |
+| B13 metrics | Similar | `percentile` (p50/p99) |
+| B14–B17 power / security / rollout / prior art | Documented | `docs/ON_DEVICE.md` |
+| C1 / C3 / C5 | Yes | LRU, breaker, ring buffer |
 
-## Code in this repo
+Map in code: `sarvam_mcp.runtime.coverage.STUDY_COVERAGE`.
 
-- `src/sarvam_mcp/runtime/` — device profile, slot scheduler, supervisor
-- `sarvam_code_ondevice_runtime` — builder guide (no API calls)
-- `sarvam_tools_local_infer` — echo-token demo; put `__CRASH__` in the prompt
+## Official Sarvam GitHub
+
+Cloud-first (`sarvam-mcp`, cookbook, skills, AI SDK). Open weights on HF; everyday Ollama still blocked on `sarvam_moe`.
 
 ```python
-from sarvam_mcp.runtime import DeviceProfile, SlotScheduler, Supervisor, choose_backend
+from sarvam_mcp.runtime import CircuitBreaker, admit, kv_cache_bytes
 
-choose_backend(DeviceProfile(allow_cloud=False), prefer="cloud")  # PermissionError
+choose_backend = __import__("sarvam_mcp.runtime", fromlist=["choose_backend"]).choose_backend
 ```
