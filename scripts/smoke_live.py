@@ -6,11 +6,9 @@ and writes audio/document outputs to disk under ``test-outputs/``.
 Usage:
     SARVAM_API_KEY=sk_... python scripts/smoke_live.py
 
-Outputs:
-    test-outputs/
-    ├── json/<tool>.json         # raw response payloads
-    ├── audio/<tool>.wav         # generated speech
-    └── SUMMARY.md               # written manually after running
+Outputs (gitignored under ``test-outputs/``):
+    json/<tool>.json   raw response payloads
+    audio/<tool>.wav   generated speech
 """
 
 from __future__ import annotations
