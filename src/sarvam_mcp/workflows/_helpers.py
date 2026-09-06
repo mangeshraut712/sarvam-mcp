@@ -14,7 +14,7 @@ from typing import Any
 
 from sarvam_mcp._registry import ServerContext
 from sarvam_mcp.audio import StoredAudio
-from sarvam_mcp.observability import CallMetrics, ToolMetrics
+from sarvam_mcp.observability import ToolMetrics
 from sarvam_mcp.tools._common import SarvamLLM
 
 
@@ -164,8 +164,3 @@ def coerce_tts_language(detected: str | None) -> str:
     if detected and detected in _TTS_SUPPORTED:
         return detected
     return "hi-IN"
-
-
-def merge(metrics: ToolMetrics, call: CallMetrics) -> None:
-    """Convenience re-export so workflow modules don't import observability directly."""
-    metrics.merge(call)

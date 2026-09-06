@@ -7,6 +7,7 @@ so tool modules can stay short and focused on their endpoint shape.
 from __future__ import annotations
 
 import base64
+import os
 import tempfile
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -17,6 +18,7 @@ import httpx
 from fastmcp import Context
 
 from sarvam_mcp._registry import ServerContext
+from sarvam_mcp.auth.elicit import ensure_auth
 
 MAX_FILE_BYTES = 25 * 1024 * 1024  # 25 MB
 
@@ -55,22 +57,23 @@ async def resolve_file_input(
     if filename:
         suffix = Path(filename).suffix or ""
 
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    tmp_path = Path(tmp.name)
+    fd, name = tempfile.mkstemp(suffix=suffix)
+    tmp_path = Path(name)
     try:
-        if file_base64 is not None:
-            data = base64.b64decode(file_base64)
-            if len(data) > max_bytes:
-                raise ValueError(
-                    f"Decoded file is {len(data)} bytes, exceeds {max_bytes} byte limit."
-                )
-            tmp.write(data)
-            tmp.close()
-            yield tmp_path
-        else:
-            assert file_url is not None
-            async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
-                async with client.stream("GET", file_url) as resp:
+        with os.fdopen(fd, "wb") as tmp:
+            if file_base64 is not None:
+                data = base64.b64decode(file_base64)
+                if len(data) > max_bytes:
+                    raise ValueError(
+                        f"Decoded file is {len(data)} bytes, exceeds {max_bytes} byte limit."
+                    )
+                tmp.write(data)
+            else:
+                assert file_url is not None
+                async with (
+                    httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client,
+                    client.stream("GET", file_url) as resp,
+                ):
                     resp.raise_for_status()
                     downloaded = 0
                     async for chunk in resp.aiter_bytes(chunk_size=65536):
@@ -80,8 +83,7 @@ async def resolve_file_input(
                                 f"Downloaded file exceeds {max_bytes} byte limit."
                             )
                         tmp.write(chunk)
-            tmp.close()
-            yield tmp_path
+        yield tmp_path
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -185,7 +187,5 @@ async def ready_ctx(ctx: Context) -> ServerContext:
     if necessary). Every tool that calls the Sarvam API should ``await`` this
     on its first line.
     """
-    from sarvam_mcp.auth.elicit import ensure_auth  # lazy to avoid circular import
-
     await ensure_auth(ctx)
     return server_ctx(ctx)
