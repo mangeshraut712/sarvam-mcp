@@ -20,6 +20,7 @@ jobs:
           uv venv
           uv pip install -e ".[dev]"
           uv run pytest -q
+          uv run ruff check .
 
   web:
     runs-on: ubuntu-latest

@@ -30,11 +30,15 @@ echo "api_key = sk_..." > ~/.sarvam/credentials
 ## Tests (required before a PR)
 
 ```bash
+bash scripts/verify.sh
+# or separately:
 pytest -q
 ruff check .
-ruff format --check .
 cd web && npx tsc --noEmit
 ```
+
+Live API (needs `SARVAM_API_KEY` and credits): `python scripts/smoke_live.py`.
+MCP handshake: `bash scripts/probe_mcp.sh .venv/bin/sarvam-mcp`.
 
 ## Project layout
 
